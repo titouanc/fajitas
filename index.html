@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WebGL fractal</title>
+    <style type="text/css">
+      body {
+        padding: 0px;
+        margin: 0px;
+      }
+
+      #canvas {
+        cursor: move;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="canvas"></canvas>
+  </body>
+
+  <!-- vertex shader -->
+  <script id="vs" type="x-shader/x-vertex">
+    precision mediump float;
+
+    attribute vec2 position;
+    varying vec2 absPos;
+
+    void main() {
+      gl_Position = vec4(position, 0, 1);
+      absPos = position;
+    }
+  </script>
+  
+  <!-- fragment shader -->
+  <script id="fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    const int N_ITER = 128;
+
+    precision mediump float;
+    varying vec2 absPos;
+    uniform float zoom;
+    uniform vec2 center;
+    uniform vec2 scale;
+
+    vec2 CMul(vec2 a, vec2 b)
+    {
+      return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
+    }
+
+    void main()
+    {
+      vec2 z0 = center.xy + zoom * scale.xy * absPos.xy;
+      vec2 zn = z0.xy;
+      float c = 1.0;
+
+      for (int i=0; i<N_ITER; i++){
+        zn = CMul(zn, zn) + z0.xy;
+        if (length(zn) > 4.0){
+          c = float(i)/float(N_ITER);
+          break;
+        }
+      }
+
+      gl_FragColor = vec4(c, c, c, 1);
+    }
+  </script>
+
+  <script src="twgl-full.min.js"></script>
+  <script>
+    var canvas = document.getElementById('canvas');
+    var gl = twgl.getWebGLContext(canvas);
+    var programInfo = twgl.createProgramInfo(gl, ["vs", "fs"]);
+    var arrays = {
+      position: [-1, -1, 0, 1, -1, 0, -1, 1, 0, -1, 1, 0, 1, -1, 0, 1, 1, 0],
+    };
+    var bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
+    var params = {
+      zoom: 1,
+      center: [-1.0, 0],
+      scale: [1.92, 1.08]
+    };
+
+    function render(time) {
+      twgl.resizeCanvasToDisplaySize(gl.canvas);
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      gl.useProgram(programInfo.program);
+      twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
+      twgl.setUniforms(programInfo, params);
+      twgl.drawBufferInfo(gl, gl.TRIANGLES, bufferInfo);
+    }
+
+    /* Initial draw */
+    requestAnimationFrame(render);
+
+    /* Zoom */
+    canvas.addEventListener('mousewheel', function(evt){
+      evt.preventDefault();
+      if (Math.sign(evt.deltaY) > 0){
+        params.zoom *= 1.125;
+      } else {
+        params.zoom *= 0.8;
+      }
+      requestAnimationFrame(render);
+    });
+
+    /* Drag */
+    var drag = {
+      active: false,
+      fromX: 0, fromY: 0,
+        toX: 0,   toY: 0,
+         cX: 0,    cY: 0
+    };
+
+    function do_drag(evt){
+      if (drag.active){
+        drag.toX = evt.clientX;
+        drag.toY = evt.clientY;
+        var dx = (1.0 * drag.fromX - drag.toX)/gl.canvas.width,
+            dy = (1.0 * drag.toY - drag.fromY)/gl.canvas.height;
+        params.center[0] = drag.cX + 2 * dx * params.zoom * params.scale[0];
+        params.center[1] = drag.cY + 2 * dy * params.zoom * params.scale[1];
+        requestAnimationFrame(render);
+      }
+    }
+
+    canvas.addEventListener('mousedown', function(evt){
+      drag.active = true;
+      drag.fromX = evt.clientX;
+      drag.fromY = evt.clientY;
+      drag.cX = params.center[0];
+      drag.cY = params.center[1];
+    });
+
+    canvas.addEventListener('mousemove', do_drag);
+    canvas.addEventListener('mouseup', function(evt){
+      do_drag(evt);
+      drag.active = false;
+    });
+  </script>
+</html>
