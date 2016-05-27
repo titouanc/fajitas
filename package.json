@@ -1,0 +1,33 @@
+{
+  "name": "fajitas",
+  "version": "0.0.0",
+  "description": "A WebGL fractal renderer",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/titouanc/fajitas.git"
+  },
+  "author": "iTitou",
+  "license": "Beerware",
+  "bugs": {
+    "url": "https://github.com/titouanc/fajitas/issues"
+  },
+  "scripts": {
+    "devserver": "webpack-dev-server --progress --colors",
+    "watch": "webpack --watch --progress",
+    "build": "webpack --progress",
+    "build-prod": "webpack --progress --optimize-minimize --optimize-dedupe --optimize-occurence-order"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.0.0",
+    "babel-preset-es2015": "",
+    "babel-polyfill": "",
+    "babel-plugin-transform-runtime": "",
+    "babel-loader": "",
+    "webpack": "",
+    "twgl.js": ""
+  }
+}
