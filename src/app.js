@@ -1,10 +1,14 @@
+import {vertexShader, mandelbrotShader, burningShipShader} from './shaders.js'
+
 export default class Fajitas {
     constructor(){
         /* Initialize context and compile shaders */
         let canvas = document.getElementById('canvas')
 
+        this.impl = mandelbrotShader;
+        this.n_iter = 128
         this.gl = twgl.getWebGLContext(canvas)
-        this.programInfo = twgl.createProgramInfo(this.gl, ["vs", "fs"])
+        this.buildProgram();
 
         /* Initialize variables */
         let arrays = {
@@ -15,7 +19,7 @@ export default class Fajitas {
         this.uniforms = {
             zoom: 1,
             center: [-1.0, 0],
-            scale: [1.92, 1.08]
+            scale: [1.92, -1.08]
         }
         this.update()
 
@@ -44,7 +48,6 @@ export default class Fajitas {
                     drag.cX + 2 * dx * this.uniforms.zoom * this.uniforms.scale[0],
                     drag.cY + 2 * dy * this.uniforms.zoom * this.uniforms.scale[1]
                 ]
-                console.log(`Drag to ${newCenter}`)
                 this.setState('center', newCenter)
             }
         }
@@ -62,6 +65,30 @@ export default class Fajitas {
             do_drag(evt)
             drag.active = false
         })
+
+        document.addEventListener('keydown', evt => {
+            if (evt.code == 'NumpadAdd'){
+                this.n_iter *= 2
+            } else if (evt.code == 'NumpadSubtract') {
+                this.n_iter /= 2
+            } else if (evt.code == 'Numpad1') {
+                this.impl = mandelbrotShader
+            } else if (evt.code == 'Numpad2') {
+                this.impl = burningShipShader
+            } else {
+                console.log(evt.code)
+                return
+            }
+
+            this.buildProgram()
+            this.update()
+        })
+    }
+
+    buildProgram(){
+        this.programInfo = twgl.createProgramInfo(this.gl, [
+            vertexShader(), this.impl(this.n_iter)
+        ])
     }
 
     setState(key, val){
@@ -70,13 +97,13 @@ export default class Fajitas {
     }
 
     render(t){
-        twgl.resizeCanvasToDisplaySize(this.gl.canvas);
-        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+        twgl.resizeCanvasToDisplaySize(this.gl.canvas)
+        this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
         
-        this.gl.useProgram(this.programInfo.program);
-        twgl.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo);
-        twgl.setUniforms(this.programInfo, this.uniforms);
-        twgl.drawBufferInfo(this.gl, this.gl.TRIANGLES, this.bufferInfo);
+        this.gl.useProgram(this.programInfo.program)
+        twgl.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo)
+        twgl.setUniforms(this.programInfo, this.uniforms)
+        twgl.drawBufferInfo(this.gl, this.gl.TRIANGLES, this.bufferInfo)
     }
 
     update(){

@@ -27,7 +27,6 @@
     "babel-polyfill": "",
     "babel-plugin-transform-runtime": "",
     "babel-loader": "",
-    "webpack": "",
-    "twgl.js": ""
+    "webpack": ""
   }
 }

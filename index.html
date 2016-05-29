@@ -20,55 +20,7 @@
   <body>
     <canvas id="canvas"></canvas>
   </body>
-
-  <!-- vertex shader -->
-  <script id="vs" type="x-shader/x-vertex">
-    precision mediump float;
-
-    attribute vec2 position;
-    varying vec2 absPos;
-
-    void main() {
-      gl_Position = vec4(position, 0, 1);
-      absPos = position;
-    }
-  </script>
   
-  <!-- fragment shader -->
-  <script id="fs" type="x-shader/x-fragment">
-    precision mediump float;
-
-    const int N_ITER = 128;
-
-    precision mediump float;
-    varying vec2 absPos;
-    uniform float zoom;
-    uniform vec2 center;
-    uniform vec2 scale;
-
-    vec2 CMul(vec2 a, vec2 b)
-    {
-      return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
-    }
-
-    void main()
-    {
-      vec2 z0 = center.xy + zoom * scale.xy * absPos.xy;
-      vec2 zn = z0.xy;
-      float c = 1.0;
-
-      for (int i=0; i<N_ITER; i++){
-        zn = CMul(zn, zn) + z0.xy;
-        if (length(zn) > 4.0){
-          c = float(i)/float(N_ITER);
-          break;
-        }
-      }
-
-      gl_FragColor = vec4(c, c, c, 1);
-    }
-  </script>
-
   <script type="text/javascript" src="twgl-full.min.js"></script>
   <script src="app.js"></script>
 </html>
