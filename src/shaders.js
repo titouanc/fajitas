@@ -1,3 +1,10 @@
+const HELPERS = `
+  vec2 CMul(vec2 a, vec2 b)
+  {
+    return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
+  }`;
+
+
 export function vertexShader(){
     return `
         precision mediump float;
@@ -8,26 +15,22 @@ export function vertexShader(){
         void main() {
           gl_Position = vec4(position, 0, 1);
           absPos = position;
-        }
-    `
+        }`
 }
+
 
 export function mandelbrotShader(n_iter=128){
     return `
         precision mediump float;
 
         const int N_ITER = ${n_iter};
+        ${HELPERS}
 
         precision mediump float;
         varying vec2 absPos;
         uniform float zoom;
         uniform vec2 center;
         uniform vec2 scale;
-
-        vec2 CMul(vec2 a, vec2 b)
-        {
-          return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
-        }
 
         void main()
         {
@@ -36,7 +39,7 @@ export function mandelbrotShader(n_iter=128){
           float c = 1.0;
 
           for (int i=0; i<N_ITER; i++){
-            zn = CMul(zn, CMul(zn, CMul(zn, zn))) + z0.xy;
+            zn = CMul(zn, zn) + z0.xy;
             if (length(zn) > 4.0){
               c = float(i)/float(N_ITER);
               break;
@@ -44,26 +47,22 @@ export function mandelbrotShader(n_iter=128){
           }
 
           gl_FragColor = vec4(c, c, c, 1);
-        }
-    `
+        }`
 }
+
 
 export function burningShipShader(n_iter=128){
     return `
         precision mediump float;
 
         const int N_ITER = ${n_iter};
+        ${HELPERS}
 
         precision mediump float;
         varying vec2 absPos;
         uniform float zoom;
         uniform vec2 center;
         uniform vec2 scale;
-
-        vec2 CMul(vec2 a, vec2 b)
-        {
-          return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
-        }
 
         void main()
         {
@@ -80,6 +79,5 @@ export function burningShipShader(n_iter=128){
           }
 
           gl_FragColor = vec4(c, c, c, 1);
-        }
-    `
+        }`
 }
