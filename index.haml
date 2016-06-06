@@ -1,0 +1,17 @@
+!!! 5
+%html
+  %head
+    %meta{charset: "utf-8"}
+    %title iTitou's WebGL Fractal renderer
+    :sass
+      body
+        padding: 0px
+        margin: 0px
+      #canvas
+        cursor: move
+        width: 100%
+        height: 100%
+  %body
+    %canvas#canvas
+    %script{type:"text/javascript", src:"twgl-full.min.js"}
+    %script{type:"text/javascript", src:"app.js"}
