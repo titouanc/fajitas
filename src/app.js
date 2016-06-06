@@ -8,7 +8,6 @@ export default class Fajitas {
         this.impl = mandelbrotShader;
         this.n_iter = 128
         this.gl = twgl.getWebGLContext(canvas)
-        this.buildProgram();
 
         /* Initialize variables */
         let arrays = {
@@ -21,6 +20,8 @@ export default class Fajitas {
             center: [-1.0, 0],
             scale: [1.92, -1.08]
         }
+        this.fromCoordinates(window.location.hash.substring(1))
+        this.buildProgram();
         this.update()
 
         /* Now the canvas is ready, attach events */
@@ -85,6 +86,17 @@ export default class Fajitas {
         })
     }
 
+    fromCoordinates(coords){
+        let s = coords.split(',').map(e => parseFloat(e))
+        let err = s.reduce((acc, x) => acc || isNaN(x), false)
+        if (! err){
+            let [i, z, x, y] = s
+            this.uniforms.zoom = z
+            this.uniforms.center = [x, y]
+            this.n_iter = i;
+        }
+    }
+
     buildProgram(){
         this.programInfo = twgl.createProgramInfo(this.gl, [
             vertexShader(), this.impl(this.n_iter)
@@ -96,7 +108,7 @@ export default class Fajitas {
         this.update()
     }
 
-    render(t){
+    render(){
         twgl.resizeCanvasToDisplaySize(this.gl.canvas)
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height)
         
@@ -107,7 +119,10 @@ export default class Fajitas {
     }
 
     update(){
-        requestAnimationFrame(t => this.render(t));
+        let [x, y] = this.uniforms.center
+        let z = this.uniforms.zoom
+        window.location.hash = `${this.n_iter},${z},${x},${y}`
+        requestAnimationFrame(t => this.render());
     }
 }
 

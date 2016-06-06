@@ -1,4 +1,7 @@
-all: app.js.ok index.html.ok
+TARGET = app.js index.html
+
+all: $(TARGET)
+publish: $(addsuffix .ok,$(TARGET))
 
 index.html: index.haml
 	haml $< > $@
