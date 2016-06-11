@@ -1,6 +1,6 @@
 import assert from 'assert'
 import {Literal, Infix, Prefix} from './src/parsetree.js'
-import {parse} from './src/mathparser.js'
+import parse from './src/mathparser.js'
 import {mul2CMul, exp2mul} from './src/transformations.js'
 
 function infixMulToCMul(node){
@@ -74,7 +74,7 @@ describe('Parse Tree', () => {
 
     it("should convert multiplications to CMul", () => {
       let expr = Infix('*', 3, 4).transform(infixMulToCMul)
-      assert(expr.equals(Prefix('CMul', 3, 4)))
+      assert.deepEqual(expr, Prefix('CMul', 3, 4))
     })
 
     it("should find nodes", () => {
@@ -88,101 +88,139 @@ describe('Parse Tree', () => {
 })
 
 describe('Math parser', () => {
-  it("should parse Literal constants", () => {
-    let expr = parse("3")
-    assert(expr.equals(Literal(3)))
+  describe('atoms', () => {
+    it("should parse Literal constants", () => {
+      let expr = parse("3")
+      assert.deepEqual(expr, Literal(3))
+    })
+
+    it("should parse Literal symbols", () => {
+      let expr = parse("variable")
+      assert.deepEqual(expr, Literal('variable'))
+    })
+
+    it("should parse addition", () => {
+      let expr = parse("3 + 4")
+      assert.deepEqual(expr, Infix('+', 3, 4))
+    })
+
+    it("should parse substraction", () => {
+      let expr = parse("3 - 4")
+      assert.deepEqual(expr, Infix('-', 3, 4))
+    })
+
+    it("should parse multiplication", () => {
+      let expr = parse("3 * 4")
+      assert.deepEqual(expr, Infix('*', 3, 4))
+    })
+
+    it("should parse division", () => {
+      let expr = parse("3 / 4")
+      assert.deepEqual(expr, Infix('/', 3, 4))
+    })
+
+    it("should parse exponentiation with ^", () => {
+      let expr = parse("3 ^ 4")
+      assert.deepEqual(expr, Infix('^', 3, 4))
+    })
+
+    it("should parse parenthesis with single content", () => {
+      let expr = parse("(3)")
+      assert.deepEqual(expr, Literal(3))
+    })
+
+    it("should parse parenthesis as argument", () => {
+      let expr = parse('3 + (4)')
+      assert.deepEqual(expr, Infix('+', Literal(3), Literal(4)))
+    })
+
+    it("should parse absolute values", () => {
+      let expr = parse("|x|")
+      assert.deepEqual(expr, Prefix('abs', 'x'))
+    })
   })
 
-  it("should parse Literal symbols", () => {
-    let expr = parse("variable")
-    assert(expr.equals(Literal('variable')))
+  describe('priorities', () => {
+    it("should respect priority of + and -", () => {
+      let expr = parse("4 - 5 + 3")
+      assert.deepEqual(expr, Infix('+', Infix('-', 4, 5), 3))
+    })
+
+    it("should respect priotity of * and +", () => {
+      let expr = parse("3*4 + 6*7")
+      assert(expr.equals(Infix('+', Infix('*', 3, 4),
+                                        Infix('*', 6, 7))))
+    })
+
+    it("should respect priotity of + and *", () => {
+      let expr = parse("3 + 4*6 + 7")
+      console.log(expr.render())
+      assert.deepEqual(expr, Infix('+', Infix('+', 3, Infix('*', 4, 6)), 7))
+    })
+
+    it("should respect priority of * and /", () => {
+      let expr = parse("3 / 4 * 2")
+      assert(expr.equals(Infix('*', Infix('/', 3, 4),
+                                        2)))
+    })
+
+    it("should respect priority of ^ and +", () => {
+      let expr = parse("1 + 2^3")
+      assert.deepEqual(expr, Infix('+', 1, Infix('^', 2, 3)))
+    })
+
+    it("should respect priority of ^ and *", () => {
+      let expr = parse("1 * 2^3")
+      assert.deepEqual(expr, Infix('*', 1, Infix('^', 2, 3)))
+    })
+
+    it("should respect priority of parenthesis", () => {
+      let expr = parse("3 * (4 + 6)")
+      assert.deepEqual(expr, Infix('*', 3, Infix('+', 4, 6)))
+    })
+
+    it("should parse recursive expressions", () => {
+      let expr = parse('(2 * (3 * (4 * 5)))')
+      assert(expr.equals(Infix('*', 2,
+                         Infix('*', 3,
+                         Infix('*', 4, 5)))))
+    })
+
+    it("should respect priority of |abs|", () => {
+      let expr = parse('3 + |2 - 4|')
+      assert.deepEqual(expr, Infix('+', 3, Prefix('abs', Infix('-', 2, 4))))
+    })
   })
 
-  it("should parse addition", () => {
-    let expr = parse("3 + 4")
-    assert(expr.equals(Infix('+', 3, 4)))
+  describe('exceptions', () => {
+    it("should throw an exception on empty string", () => {
+      assert.throws(() => parse(""))
+    })
+
+    it("should throw an exception on unmatched parenthesis", () => {
+      assert.throws(() => parse("(32 + 5"))
+    })
+
+    it("should throw an exception on unmatched |", () => {
+      assert.throws(() => parse("|a"))
+    })
   })
 
-  it("should parse substraction", () => {
-    let expr = parse("3 - 4")
-    assert(expr.equals(Infix('-', 3, 4)))
-  })
+  describe('groupers', () => {
+    it("should parse parenthesis with op inside", () => {
+      let expr = parse("(3 + 4)")
+      assert.deepEqual(expr, Infix('+', 3, 4))
+    })
 
-  it("should parse multiplication", () => {
-    let expr = parse("3 * 4")
-    assert(expr.equals(Infix('*', 3, 4)))
-  })
+    it("should parse infix with parenthesis head", () => {
+      let expr = parse('(3 + 4) * 2')
+      assert.deepEqual(expr, Infix('*', Infix('+', 3, 4), 2))
+    })
 
-  it("should parse division", () => {
-    let expr = parse("3 / 4")
-    assert(expr.equals(Infix('/', 3, 4)))
-  })
-
-  it("should parse exponentiation with ^", () => {
-    let expr = parse("3 ^ 4")
-    assert(expr.equals(Infix('^', 3, 4)))
-  })
-
-  it("should parse parenthesis with single content", () => {
-    let expr = parse("(3)")
-    assert(expr.equals(Literal(3)))
-  })
-
-  it("should parse parenthesis as argument", () => {
-    let expr = parse('3 + (4)')
-    assert(expr.equals(Infix('+', Literal(3), Literal(4))))
-  })
-
-  it("should parse parenthesis with op inside", () => {
-    let expr = parse("(3 + 4)")
-    assert(expr.equals(Infix('+', 3, 4)))
-  })
-
-  it("should respect priority of + and -", () => {
-    let expr = parse("4 - 5 + 3")
-    assert(expr.equals(Infix('+', Infix('-', 4, 5), 3)))
-  })
-
-  it("should respect priotity of * and +", () => {
-    let expr = parse("3*4 + 6*7")
-    assert(expr.equals(Infix('+', Infix('*', 3, 4),
-                                      Infix('*', 6, 7))))
-  })
-
-  it("should respect priority of * and /", () => {
-    let expr = parse("3 / 4 * 2")
-    assert(expr.equals(Infix('*', Infix('/', 3, 4),
-                                      2)))
-  })
-
-  it("should respect priority of ^ and +", () => {
-    let expr = parse("1 + 2^3")
-    assert(expr.equals(Infix('+', 1, Infix('^', 2, 3))))
-  })
-
-  it("should respect priority of ^ and *", () => {
-    let expr = parse("1 * 2^3")
-    assert(expr.equals(Infix('*', 1, Infix('^', 2, 3))))
-  })
-
-  it("should respect priority of parenthesis", () => {
-    let expr = parse("3 * (4 + 6)")
-    assert(expr.equals(Infix('*', 3, Infix('+', 4, 6))))
-  })
-
-  it("should parse recursive expressions", () => {
-    let expr = parse('(2 * (3 * (4 * 5)))')
-    assert(expr.equals(Infix('*', 2,
-                       Infix('*', 3,
-                       Infix('*', 4, 5)))))
-  })
-
-  it("should throw an exception on empty string", () => {
-    assert.throws(() => parse(""))
-  })
-
-  it("should throw an exception on unmatched parenthesis", () => {
-    assert.throws(() => parse("(32 + 5"))
+    it("should parse infix with |abs| head", () => {
+      let expr = parse('|3 - 4| * 2')
+      assert.deepEqual(expr, Infix('*', Prefix('abs', Infix('-', 3, 4)), 2))
+    })
   })
 })
 
@@ -201,8 +239,16 @@ describe('Transformations', () => {
 
   describe('shader generation', () => {
     it("should render the Mandelbrodt function from its definition", () => {
-      let expr = parse("Zn^2 + C").transform(exp2mul).transform(mul2CMul)
-      assert.equal(expr.render(), '(CMul(Zn, Zn) + C)')
+      let expr = parse("Zn^2 + C")
+      let statement = expr.transform(exp2mul).transform(mul2CMul)
+      assert.equal(statement.render(), '(CMul(Zn, Zn) + C)')
+    })
+
+    it("should render the Burning Ship function from its definition", () => {
+      let expr = parse("C + |Zn|^2")
+      console.log(expr.render())
+      let statement = expr.transform(exp2mul).transform(mul2CMul)
+      assert.equal(statement.render(), '(C + CMul(abs(Zn), abs(Zn)))')
     })
   })
 })
