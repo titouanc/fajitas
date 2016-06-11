@@ -1,7 +1,7 @@
 import assert from 'assert'
 import {Literal, Infix, Prefix} from './src/parsetree.js'
 import parse from './src/mathparser.js'
-import {mul2CMul, exp2mul} from './src/transformations.js'
+import {mul2CMul, exp2mul, shaderPipeline} from './src/transformations.js'
 
 function infixMulToCMul(node){
   if (node.op == '*' && node.infix){
@@ -67,7 +67,7 @@ describe('Parse Tree', () => {
   })
 
   describe('transformations', () => {
-    it("should should be equal with nothing", () => {
+    it("should be equal with nothing", () => {
       let expr = Infix('*', Infix('+', 1, 2), 3)
       assert(expr.transform(x => {}).equals(expr))
     })
@@ -154,7 +154,6 @@ describe('Math parser', () => {
 
     it("should respect priotity of + and *", () => {
       let expr = parse("3 + 4*6 + 7")
-      console.log(expr.render())
       assert.deepEqual(expr, Infix('+', Infix('+', 3, Infix('*', 4, 6)), 7))
     })
 
@@ -239,16 +238,15 @@ describe('Transformations', () => {
 
   describe('shader generation', () => {
     it("should render the Mandelbrodt function from its definition", () => {
-      let expr = parse("Zn^2 + C")
-      let statement = expr.transform(exp2mul).transform(mul2CMul)
-      assert.equal(statement.render(), '(CMul(Zn, Zn) + C)')
+      let expr = parse("C + Zn^2")
+      let statement = shaderPipeline(expr)
+      assert.equal(statement.render(), '((C . xy) + CMul(Zn, Zn))')
     })
 
     it("should render the Burning Ship function from its definition", () => {
       let expr = parse("C + |Zn|^2")
-      console.log(expr.render())
-      let statement = expr.transform(exp2mul).transform(mul2CMul)
-      assert.equal(statement.render(), '(C + CMul(abs(Zn), abs(Zn)))')
+      let statement = shaderPipeline(expr)
+      assert.equal(statement.render(), '((C . xy) + CMul(abs(Zn), abs(Zn)))')
     })
   })
 })

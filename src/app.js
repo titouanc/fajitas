@@ -1,11 +1,11 @@
-import {vertexShader, mandelbrotShader, burningShipShader} from './shaders.js'
+import {vertexShader, genericShader, shaderify} from './shaders.js'
 
 export default class Fajitas {
     constructor(){
         /* Initialize context and compile shaders */
         let canvas = document.getElementById('canvas')
 
-        this.impl = mandelbrotShader;
+        this.impl = 'C + Zn^2';
         this.n_iter = 128
         this.gl = twgl.getWebGLContext(canvas)
 
@@ -73,9 +73,9 @@ export default class Fajitas {
             } else if (evt.code == 'NumpadSubtract') {
                 this.n_iter /= 2
             } else if (evt.code == 'Numpad1') {
-                this.impl = mandelbrotShader
+                this.impl = 'C + Zn^2'
             } else if (evt.code == 'Numpad2') {
-                this.impl = burningShipShader
+                this.impl = 'C + |Zn|^2'
             } else {
                 console.log(evt.code)
                 return
@@ -98,9 +98,12 @@ export default class Fajitas {
     }
 
     buildProgram(){
-        this.programInfo = twgl.createProgramInfo(this.gl, [
-            vertexShader(), this.impl(this.n_iter)
-        ])
+        shaderify(this.impl).then(expr => {
+            let vertex = vertexShader()
+            let fragment = genericShader(expr, this.n_iter)
+            let shaders = [vertex, fragment]
+            this.programInfo = twgl.createProgramInfo(this.gl, shaders)
+        }).catch(alert)
     }
 
     setState(key, val){

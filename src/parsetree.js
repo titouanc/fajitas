@@ -34,18 +34,11 @@ export default class ParseTree {
                          .reduce((acc, x) => acc && x, true))
     }
 
-    clone(){
-        let args = this.args.map(x => x.clone())
-        return new ParseTree(this.op, this.infix, this.call, ...args)
-    }
-
     transform(mapper){
-        var res = mapper(this)
-        if (! res){
-            res = this.clone()
-        }
-        res.args = res.args.map(x => x.transform(mapper))
-        return res
+        let args = this.args.map(x => x.transform(mapper))
+        let clone = new ParseTree(this.op, this.infix, this.call, ...args)
+        var res = mapper(clone)
+        return res ? res : clone
     }
 
     find(filter, acc=[]){
