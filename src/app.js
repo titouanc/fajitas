@@ -72,10 +72,8 @@ export default class Fajitas {
                 this.n_iter *= 2
             } else if (evt.code == 'NumpadSubtract') {
                 this.n_iter /= 2
-            } else if (evt.code == 'Numpad1') {
-                this.impl = 'C + Zn^2'
-            } else if (evt.code == 'Numpad2') {
-                this.impl = 'C + |Zn|^2'
+            } else if (evt.code == 'Enter') {
+                this.impl = prompt("Zn+1 = ?", this.impl)
             } else {
                 console.log(evt.code)
                 return
