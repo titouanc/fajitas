@@ -198,4 +198,11 @@ describe('Transformations', () => {
     let res = Prefix('CMul', 2, 5)
     assert(res.equals(expr))
   })
+
+  describe('shader generation', () => {
+    it("should render the Mandelbrodt function from its definition", () => {
+      let expr = parse("Zn^2 + C").transform(exp2mul).transform(mul2CMul)
+      assert.equal(expr.render(), '(CMul(Zn, Zn) + C)')
+    })
+  })
 })

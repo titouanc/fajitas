@@ -4,7 +4,8 @@
   "description": "A WebGL fractal renderer",
   "main": "src/app.js",
   "scripts": {
-    "test": "mocha --watch --require babel-core/register",
+    "test": "mocha --require babel-core/register",
+    "test-watch": "mocha --watch --require babel-core/register",
     "watch": "webpack --watch --progress",
     "build": "webpack --progress",
     "build-prod": "webpack --progress --optimize-minimize --optimize-dedupe --optimize-occurence-order"
