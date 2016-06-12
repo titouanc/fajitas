@@ -22,7 +22,8 @@ export default class Fajitas {
             scale: [1.92, -1.08]
         }
         if (window.location.hash.length > 1){
-            this.fromCoordinates(window.location.hash.substring(1))
+            let hash = decodeURI(window.location.hash.substring(1))
+            this.fromCoordinates(hash)
         } else {
             let formula = $('#formula').val()
             this.fromCoordinates(`${formula}:${128}:${1}:${-1}:${0}`)
@@ -159,7 +160,7 @@ export default class Fajitas {
     update(){
         let [x, y] = this.uniforms.center
         let z = this.uniforms.zoom
-        window.location.hash = `${this.impl}:${this.n_iter}:${z}:${x}:${y}`
+        window.location.hash = encodeURI(`${this.impl}:${this.n_iter}:${z}:${x}:${y}`)
         requestAnimationFrame(t => this.render());
         $('#formula').val(this.impl)
     }
