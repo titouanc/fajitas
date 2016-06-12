@@ -67,9 +67,9 @@ export function shaderify(text){
 
         let unbound = node => (node.op != 'Zn') && (node.op != 'C')
         let freeVariables = expr.find(node => variable(node) && unbound(node))
-                                .reduce((acc, x) => acc.add(x), new Set())
+                                .reduce((acc, x) => acc.add(x.op), new Set())
         if (freeVariables.size > 0){
-            err(`Unbound variables: ${freeVariables}`)
+            err(`Unbound variables: ${[...freeVariables].join(',')}`)
         }
 
         ok(shaderPipeline(expr))

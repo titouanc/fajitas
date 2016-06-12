@@ -1,4 +1,5 @@
 import {vertexShader, genericShader, shaderify} from './shaders.js'
+import $ from 'jquery'
 
 export default class Fajitas {
     constructor(){
@@ -20,7 +21,13 @@ export default class Fajitas {
             center: [-1.0, 0],
             scale: [1.92, -1.08]
         }
-        this.fromCoordinates(window.location.hash.substring(1))
+        if (window.location.hash.length > 1){
+            this.fromCoordinates(window.location.hash.substring(1))
+        } else {
+            let formula = $('#formula').val()
+            this.fromCoordinates(`${formula}:${128}:${1}:${-1}:${0}`)
+        }
+        
         this.buildProgram();
         this.update()
 
@@ -67,25 +74,33 @@ export default class Fajitas {
             drag.active = false
         })
 
+        let changeFormula = evt => {
+            let text = $('#formula').val()
+            this.impl = text
+            this.buildProgram()
+        }
+        $('#formula').change(changeFormula)
+        $('#formula').on('input', changeFormula)
+
         document.addEventListener('keydown', evt => {
             if (evt.code == 'NumpadAdd'){
                 this.n_iter *= 2
             } else if (evt.code == 'NumpadSubtract') {
                 this.n_iter /= 2
-            } else if (evt.code == 'Enter') {
-                this.impl = prompt("Zn+1 = ?", this.impl)
             } else {
-                console.log(evt.code)
                 return
             }
-
             this.buildProgram()
-            this.update()
         })
     }
 
     fromCoordinates(coords){
-        let s = coords.split(',').map(e => parseFloat(e))
+        let [impl, ...args] = coords.split(':')
+        if (impl.length > 0){
+            this.impl = impl
+        }
+
+        let s = args.map(e => parseFloat(e))
         let err = s.reduce((acc, x) => acc || isNaN(x), false)
         if (! err){
             let [i, z, x, y] = s
@@ -95,13 +110,34 @@ export default class Fajitas {
         }
     }
 
+    showFormulaPopup(title, content=""){
+        $('#formula').popover({
+            title: title,
+            content: content,
+            container: 'body',
+            placement: 'bottom',
+            template: `<div class="popover" role="tooltip">
+                <div class="arrow"></div>
+                <h3 class="popover-title"></h3>
+                <code class="popover-content"></code>
+            </div>`
+        })
+    }
+
+    showFormulaError(error){
+        console.error(error)
+        showFormulaPopup("Error in the formula", error)
+    }
+
     buildProgram(){
         shaderify(this.impl).then(expr => {
+            console.log(`Compile ${expr.render()}`)
             let vertex = vertexShader()
             let fragment = genericShader(expr, this.n_iter)
             let shaders = [vertex, fragment]
             this.programInfo = twgl.createProgramInfo(this.gl, shaders)
-        }).catch(alert)
+            this.render()
+        }).catch(this.showFormulaError)
     }
 
     setState(key, val){
@@ -115,6 +151,7 @@ export default class Fajitas {
         
         this.gl.useProgram(this.programInfo.program)
         twgl.setBuffersAndAttributes(this.gl, this.programInfo, this.bufferInfo)
+        this.uniforms.scale = [2*this.gl.canvas.width/this.gl.canvas.height, -2]
         twgl.setUniforms(this.programInfo, this.uniforms)
         twgl.drawBufferInfo(this.gl, this.gl.TRIANGLES, this.bufferInfo)
     }
@@ -122,9 +159,13 @@ export default class Fajitas {
     update(){
         let [x, y] = this.uniforms.center
         let z = this.uniforms.zoom
-        window.location.hash = `${this.n_iter},${z},${x},${y}`
+        window.location.hash = `${this.impl}:${this.n_iter}:${z}:${x}:${y}`
         requestAnimationFrame(t => this.render());
+        $('#formula').val(this.impl)
     }
 }
 
 new Fajitas()
+
+window.jQuery = $
+window.$ = $

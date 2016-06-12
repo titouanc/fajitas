@@ -27,6 +27,7 @@
     "babel-loader": "",
     "babel-register": "",
     "webpack": "",
+    "jquery": "<3.0.0",
 
     "mocha": ""
   }

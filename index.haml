@@ -2,6 +2,7 @@
 %html
   %head
     %meta{charset: "utf-8"}
+    %link{rel:"stylesheet", href:"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css", integrity:"sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7", crossorigin:"anonymous"}
     %title iTitou's WebGL Fractal renderer
     :sass
       body
@@ -15,8 +16,24 @@
         width: 100%
         height: 50px
   %body
-    / #header
-    #body
-      %canvas#canvas
+    %nav.navbar.navbar-inverse.navbar-fixed-top
+      .container
+        .navbar-header
+          %button.navbar-toggle.collapsed{type:"button", 'data-toggle'=>"collapse", 'data-target'=>'#navbar', 'aria-expanded'=>false, 'aria-controls'=>'navbar'}
+            %span.icon-bar
+            %span.icon-bar
+            %span.icon-bar
+          %a.navbar-brand{href:"#"} Fajitas, the WebGL Fractal renderer
+        #navbar.collapse.navbar-collapse
+          %form.navbar-form.navbar-right
+            .input-group
+              %span.input-group-addon
+                Z
+                %sub n+1
+                :plain
+                  =
+              %input#formula.form-control{type:"text", value:"C + Zn^2", autocomplete:"off"}
+    %canvas#canvas
     %script{type:"text/javascript", src:"twgl-full.min.js"}
     %script{type:"text/javascript", src:"app.js"}
+    %script{type:"text/javascript", src:"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js", integrity:"sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS", crossorigin:"anonymous"}
