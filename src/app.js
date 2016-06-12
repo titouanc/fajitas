@@ -1,6 +1,20 @@
 import {vertexShader, genericShader, shaderify} from './shaders.js'
 import $ from 'jquery'
 
+// This function checks if the specified event is supported by the browser.
+// Source: http://perfectionkills.com/detecting-event-support-without-browser-sniffing/
+function isEventSupported(eventName) {
+    var el = document.createElement('div');
+    eventName = 'on' + eventName;
+    var isSupported = (eventName in el);
+    if (!isSupported) {
+        el.setAttribute(eventName, 'return;');
+        isSupported = typeof el[eventName] == 'function';
+    }
+    el = null;
+    return isSupported;
+}
+
 export default class Fajitas {
     constructor(){
         /* Initialize context and compile shaders */
@@ -33,7 +47,8 @@ export default class Fajitas {
         this.update()
 
         /* Now the canvas is ready, attach events */
-        canvas.addEventListener('mousewheel', evt => {
+        let wheelEvt = isEventSupported('mousewheel') ? 'mousewheel' : 'wheel'
+        canvas.addEventListener(wheelEvt, evt => {
             evt.preventDefault()
             let z = this.uniforms.zoom;
             if (evt.deltaY > 0){
