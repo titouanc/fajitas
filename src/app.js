@@ -86,6 +86,20 @@ export default class Fajitas {
             drag.cX = this.uniforms.center[0]
             drag.cY = this.uniforms.center[1]
         })
+        canvas.addEventListener('dblclick', evt => {
+            evt.preventDefault()
+            var z = this.uniforms.zoom;
+            var i = 0
+            let progressive_zoom = _ => {
+                z *= 0.9
+                this.setState('zoom', z)
+                if (i < 5){
+                    setTimeout(progressive_zoom, 25)
+                }
+                i++;
+            }
+            progressive_zoom()
+        })
 
         canvas.addEventListener('mousemove', do_drag)
         canvas.addEventListener('mouseup', evt => {
