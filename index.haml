@@ -10,7 +10,7 @@
         margin: 0px
         height: 100%
       .navbar-fixed-top
-        background-color: rgba(64, 64, 64, 0.5)
+        background-color: rgba(0, 0, 0, 0.7)
       #canvas
         cursor: move
         width: 100%
@@ -32,7 +32,20 @@
             %span.icon-bar
             %span.icon-bar
           %a.navbar-brand{href:"#"} Fajitas, the WebGL Fractal renderer
-        #navbar.collapse.navbar-collapse
+        .collapse.navbar-collapse
+          %ul.nav.navbar-nav.navbar-right
+            %li.dropdown
+              %a.dropdown-toggle{href:"", 'data-toggle'=>'dropdown'}
+                %i.glyphicon.glyphicon-cog
+              %ul.dropdown-menu
+                %li.dropdown-header Colors
+                %li
+                  %a
+                    %input#color0{type:"color", value:"#8c1010"}
+                    Color 1
+                  %a
+                    %input#color1{type:"color", value:"#ffc000"}
+                    Color 2
           %form.navbar-form.navbar-right
             .input-group
               %span#formula-head.input-group-addon

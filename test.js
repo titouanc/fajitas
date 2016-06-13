@@ -2,12 +2,42 @@ import assert from 'assert'
 import {Literal, Infix, Prefix} from './src/parsetree.js'
 import parse from './src/mathparser.js'
 import {mul2CMul, exp2mul, shaderPipeline} from './src/transformations.js'
+import {parseQueryString, toQueryString, color2vec, vec2color} from './src/utils.js'
 
 function infixMulToCMul(node){
   if (node.op == '*' && node.infix){
     return Prefix('CMul', ...node.args)
   }
 }
+
+describe('Utilities', () => {
+  it("should parse query string", () => {
+    let q = parseQueryString("param=value%20text&the_answer=42")
+    assert.deepEqual(q, {param: 'value text', the_answer: 42})
+  })
+
+  it("should parse query string with defaults", () => {
+    let d = {a:1, b:2}
+    let q = parseQueryString("b=42&c=3", d)
+    assert.deepEqual(q, {a: 1, b:42, c:3})
+  })
+
+  it("should generate query string", () => {
+    let q = {param: 'value text', the_answer: 42}
+    let q2 = parseQueryString(toQueryString(q))
+    assert.deepEqual(q, q2)
+  })
+
+  it("should translate CSS color to float array", () => {
+    let c = color2vec('#00ff00')
+    assert.deepEqual(c, [0, 1, 0, 1])
+  })
+
+  it("should translate float array to CSS color", () => {
+    let c = vec2color([1, 0, 0, 1])
+    assert.equal(c, '#ff0000')
+  })
+})
 
 describe('Parse Tree', () => {
   it("should wrap args as literals", () => {

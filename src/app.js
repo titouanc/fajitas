@@ -1,4 +1,5 @@
 import {vertexShader, genericShader, shaderify} from './shaders.js'
+import {color2vec} from './utils.js'
 import $ from 'jquery'
 
 // This function checks if the specified event is supported by the browser.
@@ -33,7 +34,9 @@ export default class Fajitas {
         this.uniforms = {
             zoom: 1,
             center: [-1.0, 0],
-            scale: [1.92, -1.08]
+            scale: [1.92, -1.08],
+            c0: color2vec($('#color0').val()),
+            c1: color2vec($('#color1').val()),
         }
         if (window.location.hash.length > 1){
             let hash = decodeURI(window.location.hash.substring(1))
@@ -105,7 +108,14 @@ export default class Fajitas {
             container: 'body',
             placement: 'bottom',
             trigger: 'hover click',
-            delay: {show: 0, hide: 500}
+            delay: {show: 500, hide: 1500}
+        }); // This ';' is actually required !
+
+        [0, 1].map(i => {
+            $(`#color${i}`).on('input', _ => {
+                let color = color2vec($(`#color${i}`).val())
+                this.setState(`c${i}`, color)
+            })
         })
 
         document.addEventListener('keydown', evt => {

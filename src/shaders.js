@@ -40,6 +40,7 @@ export function genericShader(expr, n_iter=128){
         uniform float zoom;
         uniform vec2 center;
         uniform vec2 scale;
+        uniform vec4 c0, c1;
 
         void main(){
           vec2 C = center.xy + zoom * scale.xy * absPos.xy;
@@ -56,7 +57,7 @@ export function genericShader(expr, n_iter=128){
             Zn = Znn;
           }
 
-          gl_FragColor = vec4(c, c, c, 1);
+          gl_FragColor = c0 + c*(c1-c0);
         }`
 }
 
