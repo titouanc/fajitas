@@ -1,5 +1,6 @@
 import {shaderPipeline, variable} from './transformations.js'
 import parse from './mathparser.js'
+import 'babel-polyfill'
 
 const HELPERS = `
   vec2 CMul(vec2 a, vec2 b){
