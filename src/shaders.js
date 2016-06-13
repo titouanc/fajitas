@@ -2,10 +2,15 @@ import {shaderPipeline, variable} from './transformations.js'
 import parse from './mathparser.js'
 
 const HELPERS = `
-  vec2 CMul(vec2 a, vec2 b)
-  {
+  vec2 CMul(vec2 a, vec2 b){
     return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
-  }`;
+  }
+
+  vec2 CInv(vec2 z){
+    float d = z.x*z.x + z.y*z.y;
+    return vec2(z.x/d, -z.y/d);
+  }
+`;
 
 
 export function vertexShader(){
@@ -36,18 +41,19 @@ export function genericShader(expr, n_iter=128){
         uniform vec2 center;
         uniform vec2 scale;
 
-        void main()
-        {
+        void main(){
           vec2 C = center.xy + zoom * scale.xy * absPos.xy;
-          vec2 Zn = vec2(0, 0);
+          vec2 Zn = C.xy;
+          vec2 Znn;
           float c = 1.0;
 
           for (int i=0; i<N_ITER; i++){
-            Zn = ${statement};
-            if (length(Zn) > 4.0){
+            Znn = ${statement};
+            if (distance(Zn, Znn) > 4.0){
               c = float(i)/float(N_ITER);
               break;
             }
+            Zn = Znn;
           }
 
           gl_FragColor = vec4(c, c, c, 1);

@@ -4,6 +4,10 @@ export function variable(node){
     return (! node.call) && isNaN(parseInt(node.op))
 }
 
+export function numeric(node){
+    return (! node.call) && ! isNaN(parseInt(node.op))
+}
+
 function unrollExp(base, power){
     if (power == 0){
         return 1
@@ -27,6 +31,8 @@ export function exp2mul(node){
 export function mul2CMul(node){
     if (node.op == '*' && node.infix){
         return Prefix('CMul', ...node.args)
+    } else if (node.op == '/' && node.infix){
+        return Prefix('CMul', node.args[0], Prefix('CInv', node.args[1]))
     }
 }
 
@@ -36,8 +42,27 @@ export function addXYtoC(node){
     }
 }
 
+export function vectorizeConstants(node){
+    if (node.infix && "+-*/".indexOf(node.op) >= 0){
+        let args = node.args.map(x => {
+            if (numeric(x)){
+                if ("+-".indexOf(node.op) >= 0){
+                    // [n, 0] for add/sub
+                    return Prefix('vec2', x.op, 0)
+                } else {
+                    // [n, n] for mul/div
+                    return Prefix('vec2', x.op, x.op)
+                }
+            } else {
+                return x
+            }
+        })
+        return Infix(node.op, ...args)
+    }
+}
+
 export function chain(...fs){
     return initial => fs.reduce((expr, f) => expr.transform(f), initial)
 }
 
-export const shaderPipeline = chain(exp2mul, mul2CMul, addXYtoC)
+export const shaderPipeline = chain(exp2mul, mul2CMul, addXYtoC, vectorizeConstants)

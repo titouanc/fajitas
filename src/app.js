@@ -93,10 +93,20 @@ export default class Fajitas {
         let changeFormula = evt => {
             let text = $('#formula').val()
             this.impl = text
+            $('#formula').popover('destroy')
             this.buildProgram()
         }
-        $('#formula').change(changeFormula)
-        $('#formula').on('input', changeFormula)
+        $('#formula').on('change', changeFormula)
+                     .on('input', changeFormula)
+        
+        $('#formula-head').popover({
+            html: true,
+            content: $('#help-tooltip').html(),
+            container: 'body',
+            placement: 'bottom',
+            trigger: 'hover click',
+            delay: {show: 0, hide: 500}
+        })
 
         document.addEventListener('keydown', evt => {
             if (evt.code == 'NumpadAdd'){
@@ -126,23 +136,17 @@ export default class Fajitas {
         }
     }
 
-    showFormulaPopup(title, content=""){
-        $('#formula').popover({
-            title: title,
-            content: content,
-            container: 'body',
-            placement: 'bottom',
-            template: `<div class="popover" role="tooltip">
-                <div class="arrow"></div>
-                <h3 class="popover-title"></h3>
-                <code class="popover-content"></code>
-            </div>`
-        })
-    }
-
     showFormulaError(error){
         console.error(error)
-        showFormulaPopup("Error in the formula", error)
+        $('#formula').popover('destroy')
+                     .popover({
+                         title: "Error in the formula",
+                         content: error,
+                         container: 'body',
+                         placement: 'bottom',
+                         trigger: 'focus click hover',
+                         template: $('#error-tooltip').html()})
+                     .popover('show')
     }
 
     buildProgram(){
@@ -153,7 +157,7 @@ export default class Fajitas {
             let shaders = [vertex, fragment]
             this.programInfo = twgl.createProgramInfo(this.gl, shaders)
             this.render()
-        }).catch(this.showFormulaError)
+        }).catch(err => this.showFormulaError(err))
     }
 
     setState(key, val){
@@ -181,7 +185,7 @@ export default class Fajitas {
     }
 }
 
-new Fajitas()
+$(document).ready(_ => new Fajitas())
 
 window.jQuery = $
 window.$ = $
