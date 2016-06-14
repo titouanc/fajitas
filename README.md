@@ -11,7 +11,8 @@ It currently supports:
 
 **[Live demo](http://ititou.be/)**
 
-![screenshot](screenshot.png)
+![screenshot](screenshots/screenshot.png)
+![screenshot2](screenshots/screenshot2.png)
 
 ## Build
 
