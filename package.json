@@ -8,6 +8,7 @@
     "test-watch": "mocha --watch --require babel-core/register",
     "watch": "webpack --watch --progress",
     "build": "webpack --progress",
+    "build-parser": "pegjs src/parser.pegjs src/parser.js",
     "build-prod": "webpack --progress --optimize-minimize --optimize-dedupe --optimize-occurence-order"
   },
   "repository": {
@@ -28,6 +29,7 @@
     "babel-register": "",
     "webpack": "",
     "jquery": "<3.0.0",
+    "pegjs": "",
 
     "mocha": ""
   }
