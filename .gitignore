@@ -1,3 +1,6 @@
 *.ok
 *.js.map
 node_modules
+app.js
+app.js.min
+src/parser.js
