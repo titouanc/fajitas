@@ -1,7 +1,7 @@
 import assert from 'assert'
 import Parser from '../src/parser.js'
 import T from '../src/transformer.js'
-import {expandPolynom} from '../src/shaderTransform.js'
+import {expandPolynom, simplify} from '../src/shaderTransform.js'
 
 function trDouble(expr){
     if (T.isNumber(expr)){
@@ -43,14 +43,47 @@ describe('Transformer', () => {
                 args: [T.int(3), T.infix("+", T.int(5), T.imag(7))]
             })
         })
-    })
-})
 
-describe('Shader transformation', () => {
-    it("should expand polynomials", () => {
-        let before = Parser.parse('x[4, -16, 16]')
-        let after = T.mapExpr(expandPolynom, before)
-        let expected = Parser.parse('(4*x^2 + -16*x^1) + 16*x^0')
-        assert.deepEqual(after, expected)
+        it("should match expressions with subset template", () => {
+            let template = {type:"integer"}
+            let expr = T.int(42)
+            assert(T.match(template, expr))
+        })
+
+        it("should match expressions with full template", () => {
+            let template = T.int(42)
+            let expr = T.int(42)
+            assert(T.match(template, expr))
+        })
+    })
+
+    describe('for shaders', () => {
+        function testTransformation(initial, transformation, expected){
+            return () => {
+                let before = Parser.parse(initial)
+                let after = T.mapExpr(transformation, before)
+                assert.deepEqual(after, Parser.parse(expected))
+            }
+        }
+
+        it("should expand polynomials",
+           testTransformation('x[4, -16, 16]', expandPolynom,
+                              '(4*x^2 + -16*x^1) + 16*x^0'))
+
+        it("should simplify ^0 to 1", testTransformation('x^0', simplify, '1'))
+        it("should simplify x^1 to x", testTransformation('x^1', simplify, 'x'))
+        it("should simplify x*1 to x", testTransformation('x*1', simplify, 'x'))
+        it("should simplify 1*x to x", testTransformation('1*x', simplify, 'x'))
+        it("should simplify x*0 to 0", testTransformation('x*0', simplify, '0'))
+        it("should simplify 0*x to 0", testTransformation('0*x', simplify, '0'))
+        it("should simplify x/1 to x", testTransformation('x/1', simplify, 'x'))
+        it("should simplify 0/x to 0", testTransformation('0/x', simplify, '0'))
+        it("should simplify x+0 to x", testTransformation('x+0', simplify, 'x'))
+        it("should simplify 0+x to x", testTransformation('0+x', simplify, 'x'))
+        it("should simplify x-0 to x", testTransformation('x-0', simplify, 'x'))
+        it("should NOT simplify 0-x to x", testTransformation('0-x', simplify, '0-x'))
+
+        it("should perform recursive simplification",
+            testTransformation('Zn^0 * 3 + 0/2', simplify, '3'))
     })
 })

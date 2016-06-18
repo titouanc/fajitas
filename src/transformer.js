@@ -44,12 +44,14 @@ export default class Transformer {
     }
 
     static mapExpr(transformation, expr){
-        var res = transformation(expr)
-        if (res == undefined){
-            res = JSON.parse(JSON.stringify(expr)) // Cheap clone \o/
+        var clone = JSON.parse(JSON.stringify(expr))
+        if (! this.isLiteral(clone)){
+            clone.args = clone.args.map(x => this.mapExpr(transformation, x))
         }
-        if (! this.isLiteral(res)){
-            res.args = res.args.map(x => this.mapExpr(transformation, x))
+
+        var res = transformation(clone)
+        if (res == undefined){
+            res = clone
         }
         return res
     }
@@ -74,5 +76,10 @@ export default class Transformer {
             case "polynom":
                 return expr.varname + "[" + expr.args.map(this.str).join(', ') + "]" + expr.degree
         }
+    }
+
+    static match(template, expr){
+        return Object.keys(template)
+                     .reduce((res, k) => res && expr[k] == template[k], true)
     }
 }
