@@ -57,4 +57,22 @@ export default class Transformer {
     static chain(...transformers){
         return expr => transformers.reduce((e, t) => this.mapExpr(t, e), expr)
     }
+
+    static str(expr){
+        var l;
+        switch (expr.type){
+            case "integer":
+            case "float":
+            case "identifier": return expr.value
+            case "imaginary": return expr.value + "i"
+            case "prefix":
+                return expr.op + "(" + expr.args.map(this.str).join(', ') + ")"
+            case "infix":
+                return "(" + this.str(expr.args[0]) + " " + expr.op + " " + this.str(expr.args[1]) + ")"
+            case "absolute":
+                return "|" + this.str(expr.value) + "|"
+            case "polynom":
+                return expr.varname + "[" + expr.args.map(this.str).join(', ') + "]" + expr.degree
+        }
+    }
 }

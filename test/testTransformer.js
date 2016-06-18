@@ -48,12 +48,9 @@ describe('Transformer', () => {
 
 describe('Shader transformation', () => {
     it("should expand polynomials", () => {
-        let before = Parser.parse('x[4, 16, 16]')
+        let before = Parser.parse('x[4, -16, 16]')
         let after = T.mapExpr(expandPolynom, before)
-        assert.deepEqual(after, T.infix('+',
-            T.infix('*', T.int(4), T.infix('^', T.identifier('x'), T.int(2))),
-            T.infix('+', 
-                T.infix('*', T.int(16), T.infix('^', T.identifier('x'), T.int(1))),
-                T.infix('*', T.int(16), T.infix('^', T.identifier('x'), T.int(0))))))
+        let expected = Parser.parse('(4*x^2 + -16*x^1) + 16*x^0')
+        assert.deepEqual(after, expected)
     })
 })

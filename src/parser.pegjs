@@ -29,8 +29,8 @@ Primary = Group / Absolute / Prefix / Literal
 Literal = Identifier / Imaginary / Number
 Imaginary = n:Number "i" {return {type: "imaginary", value: n.value}}
 Number = Float / Integer
-Integer = x:("-"? [1-9] [0-9]*) {
-    var y = (x[0] ? x[0] : '') + x[1] + x[2].join('')
+Integer = x:("-"? [0-9]+) {
+    var y = (x[0] ? x[0] : '') + x[1].join('')
     return {type: "integer", value: parseInt(y)}
 }
 Float = x:("-"? [0-9]*[\.][0-9]+) {
