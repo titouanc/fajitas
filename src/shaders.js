@@ -1,5 +1,6 @@
-import {shaderPipeline, variable} from './transformations.js'
-import parse from './mathparser.js'
+import {toShader} from './shaderTransform.js'
+import Parser from './parser.js'
+import T from './transformer.js'
 import 'babel-polyfill'
 
 const HELPERS = `
@@ -29,7 +30,7 @@ export function vertexShader(){
 
 
 export function genericShader(expr, n_iter=128){
-    let statement = expr.render()
+    let statement = T.str(expr)
     return `
         precision mediump float;
 
@@ -67,19 +68,22 @@ export function shaderify(text){
         let expr;
 
         try {
-          expr = parse(text)
+          expr = Parser.parse(text)
         }
         catch (exc){
           err(exc)
         }
 
-        let unbound = node => (node.op != 'Zn') && (node.op != 'C')
-        let freeVariables = expr.find(node => variable(node) && unbound(node))
-                                .reduce((acc, x) => acc.add(x.op), new Set())
+
+        let freeVariables = new Set()
+        T.find({type: "identifier"}, expr, x => {
+            if (x.value != 'Zn' && x.value != 'C') freeVariables.add(x.value)
+        })
+
         if (freeVariables.size > 0){
             err(`Unbound variables: ${[...freeVariables].join(',')}`)
         }
 
-        ok(shaderPipeline(expr))
+        ok(toShader(expr))
     })
 }
