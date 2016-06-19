@@ -31,6 +31,7 @@ export function vertexShader(){
 
 export function genericShader(expr, n_iter=128){
     let statement = T.str(expr)
+    console.log(`Building shader with ${statement}`)
     return `
         precision mediump float;
 

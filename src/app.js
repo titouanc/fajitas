@@ -175,7 +175,6 @@ export default class Fajitas {
 
     buildProgram(){
         shaderify(this.impl).then(expr => {
-            console.log(`Compile ${JSON.stringify(expr)}`)
             let vertex = vertexShader()
             let fragment = genericShader(expr, this.n_iter)
             let shaders = [vertex, fragment]
