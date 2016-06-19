@@ -1,7 +1,7 @@
 import assert from 'assert'
 import Parser from '../src/parser.js'
 import T from '../src/transformer.js'
-import {expandPolynom, simplify, toCMul, toShader} from '../src/shaderTransform.js'
+import {expandPolynom, simplify, toComplexTypes, toShader} from '../src/shaderTransform.js'
 
 function trDouble(expr){
     if (T.isNumber(expr)){
@@ -55,6 +55,12 @@ describe('Transformer', () => {
             let expr = T.int(42)
             assert(T.match(template, expr))
         })
+
+        it("should find identifiers in tree", () => {
+            let tpl = {type: "identifier"}
+            let expr = Parser.parse("sqrt(3*z - 2 + 2i*x)")
+            assert.deepEqual(T.findAll(tpl, expr), [T.identifier('z'), T.identifier('x')])
+        })
     })
 
     describe('for shaders', () => {
@@ -71,7 +77,7 @@ describe('Transformer', () => {
                               '(4*x^2 + -16*x^1) + 16*x^0'))
 
         it("should transform multiplications to CMul",
-            testTransformation('x*y', toCMul, 'CMul(x, y)'))
+            testTransformation('x*y', toComplexTypes, 'CMul(x, y)'))
 
         describe("simplifications", () => {
             it("should simplify ^0 to 1",testTransformation('x^0', simplify, '1'))
@@ -100,14 +106,32 @@ describe('Transformer', () => {
                 }
             }
 
+            it("should compile integers to vec2",
+                testFullStack('3', 'vec2(3, 0)'))
+
+            it("should compile floats to vec2",
+                testFullStack('3.42', 'vec2(3.42, 0)'))
+
+            it("should compile imaginary to vec2",
+                testFullStack('3i', 'vec2(0, 3)'))
+
+            it("should compile float+imaginary to a single vec2",
+                testFullStack('2.2+3i', 'vec2(2.2, 3.0)'))
+
+            it("should compile float-imaginary to a single vec2",
+                testFullStack('2.2-3i', 'vec2(2.2, -3.0)'))
+
             it("should compile Mandelbrot",
                 testFullStack('Zn^2 + C', 'CMul(Zn, Zn) + C'))
+
+            it("should compile Burning ship",
+                testFullStack('|Zn|^2 + C', 'CMul(abs(Zn), abs(Zn)) + C'))
 
             it("should compile a newtonian fractal",
                 testFullStack(
                     'Zn[1, 1, 1]1 / Zn[3, 2, 1]',
-                    '( (CMul(Zn, CMul(Zn, Zn)) + CMul(Zn, Zn)) + Zn ) /'+
-                      '( (CMul(3, CMul(Zn, Zn)) + CMul(2, Zn)) + 1 )'))
+                    'CMul((CMul(Zn, CMul(Zn, Zn)) + CMul(Zn, Zn)) + Zn, '+
+                      'CInv((CMul(vec2(3, 0), CMul(Zn, Zn)) + CMul(vec2(2, 0), Zn)) + vec2(1, 0)))'))
         })
     })
 })

@@ -60,10 +60,46 @@ export function expandExp(expr){
     }
 }
 
-export function toCMul(expr){
+export function toComplexTypes(expr){
     if (expr.type == "infix" && expr.op == "*"){
         return T.prefix('CMul', ...expr.args)
     }
+    if (expr.type == "infix" && expr.op == "/"){
+        return T.prefix('CMul', expr.args[0], T.prefix('CInv', expr.args[1]))
+    }
+    if (expr.type == "absolute"){
+        return T.prefix('abs', expr.value)
+    }
+    if (expr.type == "integer" || expr.type == "float"){
+        return T.prefix('vec2', expr, T.int(0))
+    }
+    if (expr.type == "imaginary"){
+        return T.prefix('vec2', T.int(0), T.int(expr.value))
+    }
 }
 
-export const toShader = T.chain(expandPolynom, simplify, expandExp, toCMul)
+export function sumVectors(expr){
+    if (expr.type == "infix"){
+        let [left, right] = expr.args
+        if (left.type == "prefix" && left.op == "vec2" && 
+            right.type == "prefix" && right.op == "vec2"){
+            if (expr.op == "+"){
+                return T.prefix('vec2', ...left.args.map((x, i) => {
+                    return T.float(x.value + right.args[i].value)
+                }))
+            }
+            if (expr.op == "-"){
+                return T.prefix('vec2', ...left.args.map((x, i) => {
+                    return T.float(x.value - right.args[i].value)
+                }))
+            }
+        }
+    }
+}
+
+export const toShader = T.chain(
+    expandPolynom,
+    simplify,
+    expandExp,
+    toComplexTypes,
+    sumVectors)

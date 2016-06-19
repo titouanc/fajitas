@@ -43,9 +43,16 @@ export default class Transformer {
         return this.isLiteral(expr) && ! this.isIdentifier(expr)
     }
 
+    static isAbs(expr){
+        return expr.type == "absolute"
+    }
+
     static mapExpr(transformation, expr){
         var clone = JSON.parse(JSON.stringify(expr))
-        if (! this.isLiteral(clone)){
+        if (this.isAbs(clone)){
+            clone.value = this.mapExpr(transformation, clone.value)
+        }
+        else if (! this.isLiteral(clone)){
             clone.args = clone.args.map(x => this.mapExpr(transformation, x))
         }
 
@@ -81,5 +88,22 @@ export default class Transformer {
     static match(template, expr){
         return Object.keys(template)
                      .reduce((res, k) => res && expr[k] == template[k], true)
+    }
+
+    static find(template, expr, whenFound){
+        if (this.match(template, expr)){
+            whenFound(expr)
+        }
+        if (this.isAbs(expr)){
+            this.find(template, expr.value, whenFound)
+        } else if (! this.isLiteral(expr)){
+            expr.args.map(x => this.find(template, x, whenFound))
+        }
+    }
+
+    static findAll(template, expr){
+        let res = []
+        this.find(template, expr, x => res.push(x))
+        return res
     }
 }
