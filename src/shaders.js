@@ -17,7 +17,7 @@ const HELPERS = `
 
 export function vertexShader(){
     return `
-        precision mediump float;
+        precision highp float;
 
         attribute vec2 position;
         varying vec2 absPos;
@@ -33,12 +33,11 @@ export function genericShader(expr, n_iter=128){
     let statement = T.str(expr)
     console.log(`Building shader with ${statement}`)
     return `
-        precision mediump float;
+        precision highp float;
 
         const int N_ITER = ${n_iter};
         ${HELPERS}
 
-        precision mediump float;
         varying vec2 absPos;
         uniform float zoom;
         uniform vec2 center;
