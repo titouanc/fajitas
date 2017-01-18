@@ -90,16 +90,12 @@
         is the next value
     %h4 Cool fractals
     %table
-      %tr
-        %th
-          %a.label.label-primary{onClick:"$('#formula').val('C + |Zn|^2').change()"} Burning Ship
-        %td
-          %code C + |Zn|^2
-      %tr
-        %th
-          %a.label.label-primary{onClick:"$('#formula').val('C + Zn^2').change()"} Mandelbrot
-        %td
-          %code C + Zn^2
+      - {Mandelbrot: 'C + Zn^2', BurningShip: 'C + |Zn|^2'}.each do |n, f|
+        %tr
+          %th
+            %a.label.label-primary{onClick:"$('#formula').val('#{f}').change()"}= n
+          %td
+            %code= f
     %hr
     %h4 What's this ?
     %p

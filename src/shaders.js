@@ -4,11 +4,11 @@ import T from './transformer.js'
 import 'babel-polyfill'
 
 const HELPERS = `
-  vec2 CMul(vec2 a, vec2 b){
+  vec2 CMul(in vec2 a, in vec2 b){
     return vec2(a.x*b.x - a.y*b.y, a.x*b.y + a.y*b.x);
   }
 
-  vec2 CInv(vec2 z){
+  vec2 CInv(in vec2 z){
     float d = z.x*z.x + z.y*z.y;
     return vec2(z.x/d, -z.y/d);
   }
