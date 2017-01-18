@@ -93,6 +93,12 @@ export default class Fajitas {
         $('#color1').on('input', _ => {
             repo.setState({c1: $('#color1').val()})
         })
+
+        /* Number of iterations slider */
+        $('#iterations').val(initialState.iters)
+        $('#iterations').on('input', _ => {
+            repo.setState({iters: $('#iterations').val()})
+        })
     }
 
     initZoom(initialState, canvas){

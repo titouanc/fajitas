@@ -45,7 +45,7 @@
         .collapse.navbar-collapse
           %ul.nav.navbar-nav.navbar-right
             %li.dropdown
-              %a.dropdown-toggle{href:"", 'data-toggle'=>'dropdown'}
+              %a.dropdown-toggle{href:"", title:"Controls...", 'data-toggle'=>'dropdown'}
                 %i.glyphicon.glyphicon-cog
               %ul.dropdown-menu
                 %li.dropdown-header Colors
@@ -56,6 +56,9 @@
                   %a
                     %input#color1{type:"color", value:"#ffc000"}
                     Color 2
+                %li.dropdown-header Iterations
+                %li
+                  %input#iterations{type: "range", value: 0, min: 0, max: 1500}
           %form.navbar-form.navbar-right
             .input-group
               %span#formula-head.input-group-addon
