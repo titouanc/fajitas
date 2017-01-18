@@ -61,11 +61,14 @@ export default class Fajitas {
                         state => this.buildProgram(state))
         repo.observeAny(["zoom", "center", "c0", "c1"],
                         state => this.render(state))
+        repo.observeAny(["iters", "c0", "c1"],
+                        state => this.updateControls(state))
     }
 
     initControls(initialState){
+        this.updateControls(initialState)
+
         /* Formula input */
-        $('#formula').val(initialState.eq)
         let changeFormula = evt => {
             let text = $('#formula').val()
             $('#formula').popover('destroy')
@@ -84,9 +87,6 @@ export default class Fajitas {
         }); // This ';' is actually required !
 
         /* Color inputs */
-        $('#color0').val(initialState.c0)
-        $('#color1').val(initialState.c1)
-
         $('#color0').on('input', _ => {
             repo.setState({c0: $('#color0').val()})
         })
@@ -95,7 +95,6 @@ export default class Fajitas {
         })
 
         /* Number of iterations slider */
-        $('#iterations').val(initialState.iters)
         $('#iterations').on('input', _ => {
             repo.setState({iters: $('#iterations').val()})
         })
@@ -198,6 +197,14 @@ export default class Fajitas {
 
     getScale(){
         return [2*this.gl.canvas.width/this.gl.canvas.height, -2]
+    }
+
+    updateControls(state){
+        $('#formula').val(state.eq)
+        $('#iterations').val(state.iters)
+        $('#iterations-display').html(state.iters)
+        $('#c0').val(state.c0)
+        $('#c1').val(state.c1)
     }
 
     render(state){
