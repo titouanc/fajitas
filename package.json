@@ -1,6 +1,6 @@
 {
   "name": "fajitas",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "A WebGL fractal renderer",
   "main": "src/app.js",
   "scripts": {
