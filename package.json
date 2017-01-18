@@ -29,7 +29,7 @@
     "babel-register": "",
     "webpack": "",
     "jquery": "<3.0.0",
-    "pegjs": "",
+    "pegjs": "0.9.0",
 
     "mocha": ""
   }
