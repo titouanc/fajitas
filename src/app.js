@@ -123,6 +123,10 @@ export default class Fajitas {
             }
             progressive_zoom()
         })
+
+        window.addEventListener('resize', evt => {
+            this.render(repo.getState())
+        })
     }
 
     initDrag(initialState, canvas){
