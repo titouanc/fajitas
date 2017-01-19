@@ -11,12 +11,23 @@
     %link{rel:"stylesheet", href:"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css", integrity:"sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7", crossorigin:"anonymous"}
     %title iTitou's WebGL Fractal renderer
     :sass
+      $barcolor: rgba(0, 0, 0, 0.7)
       html, body
         padding: 0px
         margin: 0px
         height: 100%
       .navbar-fixed-top
-        background-color: rgba(0, 0, 0, 0.7)
+        background-color: $barcolor
+      .footer
+        position: absolute
+        bottom: 0
+        width: 100%
+        height: 20px
+        background-color: $barcolor
+        p
+          margin-bottom: 5px
+          font-size: 15px
+          color: grey
       #canvas
         cursor: move
         width: 100%
@@ -73,6 +84,14 @@
     %script{type:"text/javascript", src:"twgl-full.min.js"}
     %script{type:"text/javascript", src:"app.js"}
     %script{type:"text/javascript", src:"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js", integrity:"sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS", crossorigin:"anonymous"}
+    %footer.footer
+      .container
+        %p
+          Fajitas, the WebGL fractal renderer by
+          %a{target: "_blank", href: "https://twitter.com/TitouOnRails"} iTitou
+          %i.glyphicon.glyphicon-menu-right
+          Code on 
+          %a{target: "_blank", href: "https://github.com/titouanc/fajitas"} Github
   / Templates for dynamic content
   #error-tooltip.hidden-template
     .popover{role:"tooltip"}
