@@ -98,6 +98,14 @@ export default class Fajitas {
         $('#iterations').on('input', _ => {
             repo.setState({iters: $('#iterations').val()})
         })
+
+        $('#save').on('click', _ => {
+            let name = prompt("Give it a name")
+            $.post('http://burrito.ititou.be/add', {
+                name: name,
+                state: repo.getRawState()
+            })
+        })
     }
 
     initZoom(initialState, canvas){

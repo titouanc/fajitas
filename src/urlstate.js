@@ -19,9 +19,13 @@ export default class UrlState {
         this.setState(missing)
     }
 
+    getRawState(){
+        return window.location.hash.substring(1)
+    }
+
     /* Return current state */
     getState(){
-        let hash = window.location.hash.substring(1)
+        let hash = this.getRawState()
         if (hash && hash.length > 0){
             try {
                 return JB64.decode(hash)
