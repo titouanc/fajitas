@@ -121,7 +121,7 @@ export default class Fajitas {
             repo.setState({center: center, zoom: z2})
         }
 
-        // Weel zoom
+        // Wheel zoom
         let wheelEvt = isEventSupported('mousewheel') ? 'mousewheel' : 'wheel'
         canvas.addEventListener(wheelEvt, evt => {
             evt.preventDefault()
@@ -134,15 +134,17 @@ export default class Fajitas {
         // Double-click zoom
         canvas.addEventListener('dblclick', evt => {
             evt.preventDefault()
-            var z = repo.getState().zoom;
+            let [px, py] = [evt.clientX, evt.clientY]
+            let larger = evt.shiftKey ? false : true
             var i = 0
             let progressive_zoom = _ => {
-                z *= 0.9
-                repo.setState({zoom: z})
+                let state = repo.getState()
+                let zlvl = larger ? 1.11 : 0.9
+                zoomWithFixedPoint(state, zlvl, px, py)
                 if (i < 5){
                     setTimeout(progressive_zoom, 25)
                 }
-                i++;
+                i++
             }
             progressive_zoom()
         })
