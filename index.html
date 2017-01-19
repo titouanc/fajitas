@@ -49,7 +49,7 @@
             <span class='icon-bar'></span>
             <span class='icon-bar'></span>
           </button>
-          <a class='navbar-brand' href='#'>Fajitas, the WebGL Fractal renderer</a>
+          <a class='navbar-brand' href=''>Fajitas, the WebGL Fractal renderer</a>
         </div>
         <!-- Right -->
         <div class='collapse navbar-collapse'>
@@ -70,9 +70,12 @@
                     Color 2
                   </a>
                 </li>
-                <li class='dropdown-header'>Iterations</li>
+                <li class='dropdown-header'>
+                  Iterations
+                  <span id='iterations-display'></span>
+                </li>
                 <li>
-                  <input id='iterations' max='1500' min='0' type='range' value='0'>
+                  <input id='iterations' max='1000' min='1' type='range' value='0'>
                 </li>
               </ul>
             </li>
