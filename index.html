@@ -19,6 +19,17 @@
       .navbar-fixed-top {
         background-color: rgba(0, 0, 0, 0.7); }
       
+      .footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 20px;
+        background-color: rgba(0, 0, 0, 0.7); }
+        .footer p {
+          margin-bottom: 5px;
+          font-size: 15px;
+          color: grey; }
+      
       #canvas {
         cursor: move;
         width: 100%;
@@ -97,6 +108,17 @@
     <script src='twgl-full.min.js' type='text/javascript'></script>
     <script src='app.js' type='text/javascript'></script>
     <script crossorigin='anonymous' integrity='sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS' src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js' type='text/javascript'></script>
+    <footer class='footer'>
+      <div class='container'>
+        <p>
+          Fajitas, the WebGL fractal renderer by
+          <a href='https://twitter.com/TitouOnRails' target='_blank'>iTitou</a>
+          <i class='glyphicon glyphicon-menu-right'></i>
+          Code on
+          <a href='https://github.com/titouanc/fajitas' target='_blank'>Github</a>
+        </p>
+      </div>
+    </footer>
   </body>
   <!-- Templates for dynamic content -->
   <div class='hidden-template' id='error-tooltip'>
