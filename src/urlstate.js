@@ -23,7 +23,11 @@ export default class UrlState {
     getState(){
         let hash = window.location.hash.substring(1)
         if (hash && hash.length > 0){
-            return JB64.decode(hash)
+            try {
+                return JB64.decode(hash)
+            } catch (err){
+                return {}
+            }
         } else {
             return {}
         }

@@ -101,16 +101,34 @@ export default class Fajitas {
     }
 
     initZoom(initialState, canvas){
+        /* Set zoom factor to zlvl times larger and
+         * set center so that (px,py) is a fixed point on screen
+         */
+        let zoomWithFixedPoint = (state, zlvl, px, py) => {
+            let z1 = state.zoom
+            let z2 = z1 / zlvl
+
+            /* Center and scale */
+            let [cx, cy] = state.center
+            let [sx, sy] = this.getScale()
+            let [W, H] = [this.gl.canvas.width, this.gl.canvas.height]
+
+            /* New center pos */
+            let center = [
+                cx + 2 * (px/W - 0.5) * (z1-z2) * sx,
+                cy + 2 * (0.5 - py/H) * (z1-z2) * sy,
+            ]
+            repo.setState({center: center, zoom: z2})
+        }
+
         // Weel zoom
         let wheelEvt = isEventSupported('mousewheel') ? 'mousewheel' : 'wheel'
         canvas.addEventListener(wheelEvt, evt => {
             evt.preventDefault()
-            let z = repo.getState().zoom;
-            if (evt.deltaY > 0){
-                repo.setState({zoom: z*1.125})
-            } else {
-                repo.setState({zoom: z*0.8})
-            }
+            let state = repo.getState()
+            let larger = (evt.deltaY < 0)
+            let zlvl = larger ? 1.125 : 0.8
+            zoomWithFixedPoint(state, zlvl, evt.clientX, evt.clientY)
         })
 
         // Double-click zoom
