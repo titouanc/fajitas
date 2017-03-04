@@ -1,4 +1,5 @@
 import json
+import random
 from flask import Flask, request, abort
 from flask.ext.cors import CORS
 from models import add_fractal, get_all_fractals
@@ -9,6 +10,12 @@ CORS(app)  # Allow Cross-Origin
 
 
 @app.route(r'/')
+def get_random():
+    selection = random.choice(get_all_fractals())
+    return json.dumps(selection)
+
+
+@app.route(r'/all')
 def get_all():
     return json.dumps(list(get_all_fractals()))
 

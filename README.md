@@ -15,7 +15,7 @@ It currently supports:
     * Operation precedence with parenthesis
     * Absolute values
 
-**[Live demo](http://ititou.be/)**
+**[Live demo](https://titouanc.github.io/fajitas/)**
 
 ![screenshot](screenshots/screenshot.png)
 ![screenshot2](screenshots/screenshot2.png)

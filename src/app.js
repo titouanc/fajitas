@@ -9,7 +9,7 @@ let repo = new UrlState({
     center: [-1.0, 0.0],
     c0: "#8c1010",
     c1: "#ffc000",
-    iters: 200,
+    iters: 100,
 })
 
 // This function checks if the specified event is supported by the browser.
