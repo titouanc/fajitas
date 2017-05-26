@@ -8,8 +8,7 @@
     "test-watch": "mocha --watch --require babel-core/register",
     "watch": "webpack --watch --progress",
     "build": "webpack --progress",
-    "build": "webpack --progress",
-    "build-parser": "pegjs src/parser.pegjs src/parser.js",
+    "build-parser": "pegjs -o src/parser.js src/parser.pegjs",
     "build-prod": "webpack --progress -p"
   },
   "repository": {
