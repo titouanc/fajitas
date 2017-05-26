@@ -10,12 +10,13 @@ module.exports = {
   module: {
     loaders: [
       {
-        include: path.join(__dirname, 'src'),
         loader: 'babel-loader',
-        query: {presets: ["es2015"]}
+        exclude: /node_modules/,
+        options: {
+          presets: ['es2015']
+        }
       }
     ]
   },
-  debug: true,
   cache: true
 };

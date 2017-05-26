@@ -8,8 +8,9 @@
     "test-watch": "mocha --watch --require babel-core/register",
     "watch": "webpack --watch --progress",
     "build": "webpack --progress",
+    "build": "webpack --progress",
     "build-parser": "pegjs src/parser.pegjs src/parser.js",
-    "build-prod": "webpack --progress --optimize-minimize --optimize-dedupe --optimize-occurence-order"
+    "build-prod": "webpack --progress -p"
   },
   "repository": {
     "type": "git",
@@ -21,16 +22,15 @@
     "url": "https://github.com/titouanc/fajitas/issues"
   },
   "devDependencies": {
-    "babel-cli": "^6.0.0",
-    "babel-preset-es2015": "",
-    "babel-polyfill": "",
-    "babel-plugin-transform-runtime": "",
-    "babel-loader": "",
-    "babel-register": "",
-    "webpack": "",
-    "jquery": "<3.0.0",
-    "pegjs": "0.9.0",
-
-    "mocha": ""
+    "babel-cli": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.24.1",
+    "jquery": "^3.2.1",
+    "mocha": "^3.2.0",
+    "pegjs": "^0.10.0",
+    "webpack": "^2.4.1"
   }
 }

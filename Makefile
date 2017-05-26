@@ -1,6 +1,7 @@
 TARGET = app.js index.html
 
 all: $(TARGET)
+
 publish: $(TARGET)
 	npm run build-prod
 	mkdir -p build
@@ -13,8 +14,13 @@ publish: $(TARGET)
 	git checkout master
 	git stash pop	
 
-index.html: index.haml
+clean:
+	rm -f $(TARGET)
+
+%.html: %.haml
 	haml $< > $@
 
 app.js: src/*
 	npm run build
+
+.PHONY: all publish

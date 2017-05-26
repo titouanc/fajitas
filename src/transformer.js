@@ -24,6 +24,10 @@ export default class Transformer {
         return {type: "identifier", value: x}
     }
 
+    static absolute(x){
+        return {type: "absolute", value: x}
+    }
+
     /* Helpers */
     static isLiteral(expr){
         switch (expr.type){
@@ -68,7 +72,6 @@ export default class Transformer {
     }
 
     static str(expr){
-        var l;
         switch (expr.type){
             case "integer":
             case "float":
