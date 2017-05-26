@@ -87,11 +87,15 @@ export default class Fajitas {
         }); // This ';' is actually required !
 
         /* Color inputs */
-        $('#color0').on('input', _ => {
-            repo.setState({c0: $('#color0').val()})
-        })
-        $('#color1').on('input', _ => {
-            repo.setState({c1: $('#color1').val()})
+        [0, 1].map(i => {
+            let dom_name = `#color${i}`
+            let state_name = `c${i}`
+            $(dom_name).val(initialState[state_name])
+            $(dom_name).on('input', _ => {
+                let new_state = {}
+                new_state[state_name] = $(dom_name).val()
+                repo.setState(new_state)
+            })
         })
 
         /* Number of iterations slider */
