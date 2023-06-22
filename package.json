@@ -4,14 +4,9 @@
   "description": "A WebGL fractal renderer",
   "main": "src/app.js",
   "scripts": {
-    "test": "mocha --require babel-core/register",
-    "test-watch": "mocha --watch --require babel-core/register",
-    "watch": "webpack --watch --progress",
-    "build": "webpack --progress",
-    "build-parser": "pegjs -o src/parser.js src/parser.pegjs",
-    "build-prod": "webpack --progress -p",
     "elm": "elm",
-    "elm-format": "elm-format --yes elm-src"
+    "elm-format": "elm-format --yes src tests",
+    "elm-test": "elm-test"
   },
   "repository": {
     "type": "git",
@@ -36,6 +31,7 @@
   },
   "dependencies": {
     "elm": "^0.19.1-5",
-    "elm-format": "^0.8.7"
+    "elm-format": "^0.8.7",
+    "elm-test": "^0.19.1-revision12"
   }
 }
