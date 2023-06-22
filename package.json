@@ -9,7 +9,9 @@
     "watch": "webpack --watch --progress",
     "build": "webpack --progress",
     "build-parser": "pegjs -o src/parser.js src/parser.pegjs",
-    "build-prod": "webpack --progress -p"
+    "build-prod": "webpack --progress -p",
+    "elm": "elm",
+    "elm-format": "elm-format --yes elm-src"
   },
   "repository": {
     "type": "git",
@@ -31,5 +33,9 @@
     "mocha": "^3.2.0",
     "pegjs": "^0.10.0",
     "webpack": "^2.4.1"
+  },
+  "dependencies": {
+    "elm": "^0.19.1-5",
+    "elm-format": "^0.8.7"
   }
 }
