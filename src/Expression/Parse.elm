@@ -1,4 +1,4 @@
-module ParseExpression exposing (parseExpression)
+module Expression.Parse exposing (parseExpression)
 
 import Complex
 import Expression exposing (BinaryOp(..), Expression(..), Keyword(..), UnaryOp(..))

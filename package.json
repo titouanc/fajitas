@@ -5,8 +5,9 @@
   "main": "src/app.js",
   "scripts": {
     "elm": "elm",
-    "elm-format": "elm-format --yes src tests",
-    "elm-test": "elm-test"
+    "build": "elm make --debug --output=dist/main.js src/Main.elm",
+    "format": "elm-format --yes src tests",
+    "test": "elm-test"
   },
   "repository": {
     "type": "git",
