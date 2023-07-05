@@ -23,6 +23,8 @@ expressions_to_test =
         , ( "3 - 2i", bin (real 3) Sub (im 2) )
         , ( "Zn + C + 1", bin (bin (key Zn) Add (key C)) Add (real 1) )
         , ( "Zn - C - 1", bin (bin (key Zn) Sub (key C)) Sub (real 1) )
+        , ( "Zn + C - 1", bin (bin (key Zn) Add (key C)) Sub (real 1) )
+        , ( "Zn - C + 1", bin (bin (key Zn) Sub (key C)) Add (real 1) )
         ]
       )
     , ( "grouping"

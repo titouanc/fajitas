@@ -1,7 +1,7 @@
 module Expression.Simplify exposing (simplify)
 
 import Complex exposing (Complex)
-import Expression as E
+import Expression
     exposing
         ( BinaryExpression
         , BinaryOp(..)
@@ -146,6 +146,30 @@ simplifyBinary bin =
             default
 
 
+simplifyPoly : Expression.Polynom -> Expression
+simplifyPoly poly =
+    let
+        simplified =
+            { variable = simplify poly.variable
+            , terms = List.map simplify poly.terms
+            , degree = poly.degree
+            }
+
+        default =
+            Poly simplified
+    in
+    case simplified.variable of
+        Number n ->
+            if Complex.isZero n then
+                Expression.polyFreeValue simplified
+
+            else
+                default
+
+        _ ->
+            default
+
+
 simplify : Expression -> Expression
 simplify expr =
     case expr of
@@ -154,6 +178,9 @@ simplify expr =
 
         Unary un ->
             simplifyUnary un
+
+        Poly poly ->
+            simplifyPoly poly
 
         e ->
             e

@@ -178,4 +178,25 @@ suite =
         , Test.describe
             "Mandelbrot is not simplifiable"
             [ testSimplify mandelbrot mandelbrot ]
+        , Test.describe
+            "Polynoms"
+            [ Test.describe
+                "Simplify terms"
+                [ testSimplify
+                    (poly (key Zn) [ real 3, real 2 ] 3)
+                    (poly (key Zn) [ bin (real 1) Add (real 2), bin (real 5) Sub (real 3) ] 3)
+                ]
+            , Test.describe
+                "Simplify base"
+                [ testSimplify
+                    (poly (real 3) [ real 1 ] 3)
+                    (poly (bin (real 1) Add (real 2)) [ real 1 ] 3)
+                ]
+            , Test.describe
+                "Polynom of base 0 is its free value"
+                [ testSimplify
+                    (real 3)
+                    (poly (real 0) [ real 1, real 2, real 3 ] 0)
+                ]
+            ]
         ]

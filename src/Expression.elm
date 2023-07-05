@@ -1,4 +1,4 @@
-module Expression exposing (BinaryExpression, BinaryOp(..), Expression(..), Keyword(..), Polynom, UnaryExpression, UnaryOp(..), toString)
+module Expression exposing (BinaryExpression, BinaryOp(..), Expression(..), Keyword(..), Polynom, UnaryExpression, UnaryOp(..), expandPoly, polyFreeValue, toString)
 
 import Complex exposing (Complex)
 
@@ -72,6 +72,37 @@ binaryToString { op, left, right } =
                     "^"
     in
     "(" ++ toString left ++ optext ++ toString right ++ ")"
+
+
+expandPoly : Polynom -> Expression
+expandPoly { variable, terms, degree } =
+    let
+        max =
+            List.length terms + degree - 1
+
+        renderTerm i term =
+            Binary
+                { left = term
+                , op = Mul
+                , right =
+                    Binary
+                        { left = variable
+                        , op = Exp
+                        , right = max - i |> toFloat |> Complex.fromReal |> Number
+                        }
+                }
+    in
+    List.indexedMap renderTerm terms
+        |> List.foldl (\l -> \r -> Binary { left = l, op = Add, right = r }) (Complex.fromReal 0 |> Number)
+
+
+polyFreeValue : Polynom -> Expression
+polyFreeValue { terms, degree } =
+    if degree > 0 then
+        Complex.fromReal 0 |> Number
+
+    else
+        List.reverse terms |> List.head |> Maybe.withDefault (Complex.fromReal 0 |> Number)
 
 
 polyToString : Polynom -> String

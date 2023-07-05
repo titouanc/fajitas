@@ -9,6 +9,8 @@ import Complex
 import Debug
 import Expression exposing (BinaryOp(..), Expression(..), Keyword(..), UnaryOp(..))
 import Expression.Parse exposing (parseExpression)
+import Expression.Shader exposing (toShader)
+import Expression.Simplify exposing (simplify)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Ports
@@ -38,6 +40,15 @@ init flags url key =
     ( { nav = nav, contextSize = Nothing }, Cmd.batch [ cmd ] )
 
 
+mandelbrot : Expression
+mandelbrot =
+    Binary
+        { left = Binary { left = Keyword Zn, op = Exp, right = Complex.fromReal 2 |> Number }
+        , op = Add
+        , right = Keyword C
+        }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -45,7 +56,7 @@ update msg model =
             ( { model | nav = nav }, Cmd.none )
 
         WebGLReady size ->
-            ( { model | contextSize = size }, Cmd.none )
+            ( { model | contextSize = size }, Ports.setShader (toShader mandelbrot) )
 
         _ ->
             ( model, Cmd.none )
@@ -78,10 +89,19 @@ navBar model =
         |> Navbar.view model.nav
 
 
+demo : Html Msg
+demo =
+    let
+        rendered =
+            Expression.toString mandelbrot
+    in
+    "Zn+1 = " ++ rendered |> Html.text
+
+
 view : Model -> Browser.Document Msg
 view model =
     { title = "Fajitas"
-    , body = [ CDN.stylesheet, navBar model ]
+    , body = [ navBar model, Html.pre [] [ demo ] ]
     }
 
 
