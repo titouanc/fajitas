@@ -1,62 +1,64 @@
 const complexLib = `
-    float cxnorm(vec2 cartesian)
-    {
-        return sqrt(cartesian.x*cartesian.x + cartesian.y*cartesian.y);
-    }
 
-    vec2 fromPolar(vec2 polar)
-    {
-        return vec2(polar.y*cos(polar.x), polar.y*sin(polar.x));
-    }
-
-    vec2 toPolar(vec2 cartesian)
-    {
-        float rho = cxnorm(cartesian);
-        return vec2(acos(cartesian.x / rho), rho);
-    }
-
-    vec2 cxmul(vec2 left, vec2 right)
-    {
-        return vec2(
-            left.x*right.x - left.y*right.y,
-            left.x*right.y + left.y*right.x
-        );
-    }
-
-    vec2 cxdiv(vec2 left, vec2 right)
-    {
-        float d = right.x * right.x + right.y * right.y;
-        return vec2(
-            (left.x * right.x + left.y * right.y) / d,
-            (left.y * right.x - left.x * right.y) / d
-        );
-    }
-
-    vec2 cxexp(vec2 cartesian)
-    {
-        return fromPolar(vec2(exp(cartesian.x), cartesian.y));
-    }
-
-    vec2 cxlog(vec2 cartesian)
-    {
-        vec2 polar = toPolar(cartesian);
-        return vec2(log(polar.y), polar.x);
-    }
-
-    vec2 cxpow(vec2 left, vec2 right)
-    {
-        if (left == vec2(0, 0)){
-            return vec2(0, 0);
-        }
-        return cxexp(cxmul(cxlog(left), right));
-    }
 `;
 
 const fragmentShader = ({zn_next, n_iterations}) => `
 precision highp float;
 
-${complexLib}
+/* ========= COMPLEX ARITHMETICS ========= */
+float cxnorm(vec2 cartesian)
+{
+    return sqrt(cartesian.x*cartesian.x + cartesian.y*cartesian.y);
+}
 
+vec2 fromPolar(vec2 polar)
+{
+    return vec2(polar.y*cos(polar.x), polar.y*sin(polar.x));
+}
+
+vec2 toPolar(vec2 cartesian)
+{
+    float rho = cxnorm(cartesian);
+    return vec2(acos(cartesian.x / rho), rho);
+}
+
+vec2 cxmul(vec2 left, vec2 right)
+{
+    return vec2(
+        left.x*right.x - left.y*right.y,
+        left.x*right.y + left.y*right.x
+    );
+}
+
+vec2 cxdiv(vec2 left, vec2 right)
+{
+    float d = right.x * right.x + right.y * right.y;
+    return vec2(
+        (left.x * right.x + left.y * right.y) / d,
+        (left.y * right.x - left.x * right.y) / d
+    );
+}
+
+vec2 cxexp(vec2 cartesian)
+{
+    return fromPolar(vec2(exp(cartesian.x), cartesian.y));
+}
+
+vec2 cxlog(vec2 cartesian)
+{
+    vec2 polar = toPolar(cartesian);
+    return vec2(log(polar.y), polar.x);
+}
+
+vec2 cxpow(vec2 left, vec2 right)
+{
+    if (left == vec2(0, 0)){
+        return vec2(0, 0);
+    }
+    return cxexp(cxmul(cxlog(left), right));
+}
+
+/* ========= The shader is here ! ========== */
 varying vec2 coordinates;
 
 uniform float scale;
@@ -133,7 +135,7 @@ void main() {
         return shader;
     }
 
-    const setupContext = () => {
+    app.ports.setupContext.subscribe(() => {
         canvas = document.querySelector("canvas");
         canvas.setAttribute("height", window.innerHeight);
         canvas.setAttribute("width", window.innerWidth);
@@ -153,36 +155,10 @@ void main() {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         vsh = loadShader(gl.VERTEX_SHADER, vertexShader);
 
-        app.ports.onContextReady.send(null);
-    };
+        app.ports.onContextReady.send({width: canvas.width, height: canvas.height});
+    });
 
-    const renderFrame = ({center, scale, color0, color1}) => {
-        console.log(`Render frame ${JSON.stringify({center, scale, color0, color1})} !`);
-
-        gl.uniform1f(
-            gl.getUniformLocation(program, "scale"),
-            scale
-        );
-
-        gl.uniform4fv(
-            gl.getUniformLocation(program, "color0"),
-            [...color0, 1.0]
-        );
-
-        gl.uniform4fv(
-            gl.getUniformLocation(program, "color1"),
-            [...color1, 1.0]
-        );
-
-        gl.uniform2fv(
-            gl.getUniformLocation(program, "center"),
-            center
-        );
-
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
-    }
-
-    const loadProgram = (loadProgramCommand) => {
+    app.ports.loadProgram.subscribe((loadProgramCommand) => {
         const shaderCode = fragmentShader(loadProgramCommand);
         if (program !== undefined){
             gl.detachShader(program, vsh);
@@ -217,9 +193,31 @@ void main() {
         gl.uniform2fv(aspect_ratio, aspect_ratio_value);
 
         app.ports.onShaderReady.send(null);
-    }
+    });
 
-    app.ports.setupContext.subscribe(setupContext);
-    app.ports.loadProgram.subscribe(loadProgram);
-    app.ports.renderFrame.subscribe(renderFrame);
+    app.ports.renderFrame.subscribe(({center, scale, color0, color1}) => {
+        console.log(`Render frame ${JSON.stringify({center, scale, color0, color1})} !`);
+
+        gl.uniform1f(
+            gl.getUniformLocation(program, "scale"),
+            scale
+        );
+
+        gl.uniform4fv(
+            gl.getUniformLocation(program, "color0"),
+            [...color0, 1.0]
+        );
+
+        gl.uniform4fv(
+            gl.getUniformLocation(program, "color1"),
+            [...color1, 1.0]
+        );
+
+        gl.uniform2fv(
+            gl.getUniformLocation(program, "center"),
+            center
+        );
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    });
 })();

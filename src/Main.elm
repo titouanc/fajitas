@@ -15,6 +15,7 @@ import Expression.Shader exposing (toShader)
 import Expression.Simplify exposing (simplify)
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events.Extra.Mouse as Mouse
 import Ports
 import Url
 
@@ -27,8 +28,11 @@ type Msg
     = NoMsg
     | NavbarMsg Navbar.State
     | ChangeEquation String
-    | ContextReady ()
+    | ContextReady Ports.Size
     | ShaderReady ()
+    | MouseDown ( Float, Float )
+    | MouseMove ( Float, Float )
+    | MouseUp ( Float, Float )
 
 
 type alias Model =
@@ -36,6 +40,8 @@ type alias Model =
     , equation : String
     , center : ( Float, Float )
     , scale : Float
+    , grab : Maybe ( Float, Float )
+    , size : Maybe Ports.Size
     }
 
 
@@ -55,6 +61,8 @@ init flags url key =
             , equation = initialEquation
             , scale = 2
             , center = ( -0.5, 0 )
+            , grab = Nothing
+            , size = Nothing
             }
     in
     ( model, Cmd.batch [ Ports.setupContext (), cmd ] )
@@ -80,17 +88,29 @@ render model =
         }
 
 
+translateCenter : Model -> ( Float, Float ) -> ( Float, Float ) -> ( Float, Float )
+translateCenter model ( fromX, fromY ) ( toX, toY ) =
+    let
+        s =
+            Maybe.withDefault { width = 1, height = 1 } model.size
+
+        x =
+            Tuple.first model.center - 2 * model.scale * (toX - fromX) / toFloat s.width
+
+        y =
+            Tuple.second model.center - 2 * model.scale * (toY - fromY) / toFloat s.height
+    in
+    ( x, y )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoMsg ->
-            ( model, Cmd.none )
-
         NavbarMsg nav ->
             ( { model | nav = nav }, Cmd.none )
 
-        ContextReady _ ->
-            ( model, updateShader model )
+        ContextReady size ->
+            ( { model | size = Just size }, updateShader model )
 
         ShaderReady _ ->
             ( model, render model )
@@ -101,6 +121,32 @@ update msg model =
                     { model | equation = text }
             in
             ( newModel, updateShader newModel )
+
+        MouseDown pos ->
+            ( { model | grab = Just pos }, Cmd.none )
+
+        MouseMove to ->
+            case model.grab of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just from ->
+                    ( model, render { model | center = translateCenter model from to } )
+
+        MouseUp to ->
+            case model.grab of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just from ->
+                    let
+                        newModel =
+                            { model | center = translateCenter model from to, grab = Nothing }
+                    in
+                    ( newModel, render newModel )
+
+        NoMsg ->
+            ( model, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -152,7 +198,15 @@ navBar model =
 view : Model -> Browser.Document Msg
 view model =
     { title = "Fajitas"
-    , body = [ navBar model, Html.canvas [] [] ]
+    , body =
+        [ navBar model
+        , Html.canvas
+            [ Mouse.onDown (.offsetPos >> MouseDown)
+            , Mouse.onMove (.offsetPos >> MouseMove)
+            , Mouse.onUp (.offsetPos >> MouseUp)
+            ]
+            []
+        ]
     }
 
 

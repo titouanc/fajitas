@@ -19,7 +19,7 @@ unpackInts x =
         Just { width = x // base, height = x |> modBy base }
 
 
-port onContextReady : (() -> msg) -> Sub msg
+port onContextReady : (Size -> msg) -> Sub msg
 
 
 port onShaderReady : (() -> msg) -> Sub msg
