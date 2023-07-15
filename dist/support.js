@@ -1,11 +1,4 @@
-const fragmentShader = `
-    precision highp float;
-
-    varying vec2 coordinates;
-
-    uniform vec2 zoom;
-    uniform vec2 center;
-
+const complexLib = `
     float cxnorm(vec2 cartesian)
     {
         return sqrt(cartesian.x*cartesian.x + cartesian.y*cartesian.y);
@@ -52,37 +45,55 @@ const fragmentShader = `
 
     vec2 cxpow(vec2 left, vec2 right)
     {
+        if (left == vec2(0, 0)){
+            return vec2(0, 0);
+        }
         return cxexp(cxmul(cxlog(left), right));
     }
+`;
 
-    const int MAX_ITERATIONS = 100;
+const fragmentShader = ({zn_next, n_iterations}) => `
+precision highp float;
 
-    vec2 recurse(vec2 C, vec2 Zn);
+${complexLib}
 
-    void main()
-    {
-        vec2 Zn = vec2(0, 0);
-        vec2 C = center + coordinates * zoom;
+varying vec2 coordinates;
 
-        float n = cxnorm(C);
-        gl_FragColor = vec4(n, n, n, 1.0);
-        return;
+uniform float scale;
+uniform vec2 aspect_ratio;
+uniform vec2 center;
+uniform vec4 color0;
+uniform vec4 color1;
 
-        int iterations = -1;
-        for (int i=0; i<MAX_ITERATIONS; i++){
-            Zn = recurse(C, Zn);
-            if (cxnorm(Zn) > 4.0){
-                iterations = i;
-                break;
-            }
+void main()
+{
+    float d = 0.0;
+    vec4 dcolor = color1 - color0;
+    vec2 C = center + coordinates * scale * aspect_ratio;
+    vec2 Zn = vec2(0, 0);
+    vec2 Znn = Zn;
+
+    /*
+    d = cxnorm(C);
+    gl_FragColor = color0 + d * dcolor;
+    return;
+    */
+
+
+    int iterations = 0;
+    for (int i=0; i<${n_iterations}; i++){
+        iterations = i;
+        
+        Znn = ${zn_next};
+        if (cxnorm(Znn - Zn) > 4.0){
+            break;
         }
-
-        if (iterations == -1){
-            iterations = MAX_ITERATIONS;
-        }
-
-        gl_FragColor = iterations > (MAX_ITERATIONS / 2) ? vec4(1.0, 1.0, 1.0, 1.0) : vec4(0.0, 0.0, 0.0, 1.0);
+        Zn = Znn;
     }
+
+    d = float(iterations) / float(${n_iterations});
+    gl_FragColor = color0 + d * dcolor;
+}
 `;
 
 const vertexShader = `
@@ -100,7 +111,10 @@ void main() {
 (() => {
     const app = Elm.Main.init({});
 
+    const nav = document.querySelector("nav");
     const canvas = document.createElement("canvas");
+    canvas.setAttribute("height", window.innerHeight);
+    canvas.setAttribute("width", window.innerWidth);
     document.body.appendChild(canvas);
 
     //const canvas = document.querySelector("#the-canvas");
@@ -121,6 +135,8 @@ void main() {
 
     const loadShader = (type, source) => {
         const shader = gl.createShader(type);
+        console.log("Load shader");
+        console.log(source);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
 
@@ -137,15 +153,40 @@ void main() {
     let fsh = undefined;
     const vsh = loadShader(gl.VERTEX_SHADER, vertexShader);
 
-    const loadProgram = (shaderExpr) => {
-        const shaderCode = `${fragmentShader} vec2 recurse(vec2 C, vec2 Zn){return ${shaderExpr};}`
-        console.log("Loading program: " + shaderCode);
+    const renderFrame = ({center, scale, color0, color1}) => {
+        console.log(`Render frame ${JSON.stringify({center, scale, color0, color1})} !`);
 
+        gl.uniform1f(
+            gl.getUniformLocation(program, "scale"),
+            scale
+        );
+
+        gl.uniform4fv(
+            gl.getUniformLocation(program, "color0"),
+            [...color0, 1.0]
+        );
+
+        gl.uniform4fv(
+            gl.getUniformLocation(program, "color1"),
+            [...color1, 1.0]
+        );
+
+        gl.uniform2fv(
+            gl.getUniformLocation(program, "center"),
+            center
+        );
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    const loadProgram = (loadProgramCommand) => {
+        const shaderCode = fragmentShader(loadProgramCommand);
         if (program !== undefined){
-            gl.detachShader(vsh);
-            gl.detachShader(fsh);
+            gl.detachShader(program, vsh);
+            gl.detachShader(program, fsh);
             gl.deleteShader(fsh);
             gl.deleteProgram(program);
+            program = undefined;
         }
 
         fsh = loadShader(gl.FRAGMENT_SHADER, shaderCode);
@@ -160,20 +201,22 @@ void main() {
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.viewport(0, 0, canvas.width, canvas.height);
 
         const coord = gl.getAttribLocation(program, "position");
         gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(coord);
 
-        const zoom = gl.getUniformLocation(program, "zoom");
-        gl.uniform2fv(zoom, [1, 1]);
-        const center = gl.getUniformLocation(program, "center");
-        gl.uniform2fv(center, [0, 0]);
+        const W = canvas.width
+        const H = canvas.height
+        const aspect_ratio_value = (W > H) ? [1, -H/W] : [W/H, -1];
+        const aspect_ratio = gl.getUniformLocation(program, "aspect_ratio");
+        gl.uniform2fv(aspect_ratio, aspect_ratio_value);
 
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        app.ports.onShaderReady.send(null);
     }
 
-    app.ports.setShader.subscribe(loadProgram);
-    app.ports.onWebGLReady.send(canvas.clientWidth * 65536 + canvas.clientHeight);
+    app.ports.loadProgram.subscribe(loadProgram);
+    app.ports.renderFrame.subscribe(renderFrame);
+    app.ports.onWebGLReady.send(null);
 })();

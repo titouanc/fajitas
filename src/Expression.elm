@@ -117,10 +117,10 @@ polyToString { variable, terms, degree } =
                     toString term
 
                 1 ->
-                    toString term ++ "x" ++ toString variable
+                    toString term ++ "*" ++ toString variable
 
                 n ->
-                    toString term ++ "x" ++ toString variable ++ "^" ++ String.fromInt n
+                    toString term ++ "*" ++ toString variable ++ "^" ++ String.fromInt n
     in
     List.indexedMap renderTerm terms |> String.join " + "
 

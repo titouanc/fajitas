@@ -1,4 +1,4 @@
-port module Ports exposing (Size, onWebGLReady, setShader, unpackInts)
+port module Ports exposing (Size, loadProgram, onShaderReady, onWebGLReady, renderFrame, unpackInts)
 
 
 base : Int
@@ -19,7 +19,25 @@ unpackInts x =
         Just { width = x // base, height = x |> modBy base }
 
 
-port onWebGLReady : (Int -> msg) -> Sub msg
+port onWebGLReady : (() -> msg) -> Sub msg
 
 
-port setShader : String -> Cmd msg
+port onShaderReady : (() -> msg) -> Sub msg
+
+
+type alias LoadProgramCommand =
+    { zn_next : String, n_iterations : Int }
+
+
+port loadProgram : LoadProgramCommand -> Cmd msg
+
+
+type alias RenderFrameCommand =
+    { center : ( Float, Float )
+    , scale : Float
+    , color0 : ( Float, Float, Float )
+    , color1 : ( Float, Float, Float )
+    }
+
+
+port renderFrame : RenderFrameCommand -> Cmd msg
