@@ -1,4 +1,4 @@
-port module Ports exposing (Size, loadProgram, onShaderReady, onWebGLReady, renderFrame, unpackInts)
+port module Ports exposing (Size, loadProgram, onContextReady, onShaderReady, renderFrame, setupContext, unpackInts)
 
 
 base : Int
@@ -19,7 +19,7 @@ unpackInts x =
         Just { width = x // base, height = x |> modBy base }
 
 
-port onWebGLReady : (() -> msg) -> Sub msg
+port onContextReady : (() -> msg) -> Sub msg
 
 
 port onShaderReady : (() -> msg) -> Sub msg
@@ -41,3 +41,6 @@ type alias RenderFrameCommand =
 
 
 port renderFrame : RenderFrameCommand -> Cmd msg
+
+
+port setupContext : () -> Cmd msg

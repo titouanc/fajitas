@@ -27,7 +27,7 @@ type Msg
     = NoMsg
     | NavbarMsg Navbar.State
     | ChangeEquation String
-    | WebGLReady ()
+    | ContextReady ()
     | ShaderReady ()
 
 
@@ -57,7 +57,7 @@ init flags url key =
             , center = ( -0.5, 0 )
             }
     in
-    ( model, cmd )
+    ( model, Cmd.batch [ Ports.setupContext (), cmd ] )
 
 
 updateShader : Model -> Cmd Msg
@@ -89,7 +89,7 @@ update msg model =
         NavbarMsg nav ->
             ( { model | nav = nav }, Cmd.none )
 
-        WebGLReady _ ->
+        ContextReady _ ->
             ( model, updateShader model )
 
         ShaderReady _ ->
@@ -106,7 +106,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ports.onWebGLReady WebGLReady
+        [ Ports.onContextReady ContextReady
         , Ports.onShaderReady ShaderReady
         ]
 
@@ -152,7 +152,7 @@ navBar model =
 view : Model -> Browser.Document Msg
 view model =
     { title = "Fajitas"
-    , body = [ navBar model ]
+    , body = [ navBar model, Html.canvas [] [] ]
     }
 
 

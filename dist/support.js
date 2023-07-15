@@ -111,27 +111,11 @@ void main() {
 (() => {
     const app = Elm.Main.init({});
 
-    const nav = document.querySelector("nav");
-    const canvas = document.createElement("canvas");
-    canvas.setAttribute("height", window.innerHeight);
-    canvas.setAttribute("width", window.innerWidth);
-    document.body.appendChild(canvas);
-
-    //const canvas = document.querySelector("#the-canvas");
-    const gl = canvas.getContext("webgl");
-    if (! gl){
-        console.error("WebGL is not supported");
-        app.ports.onWebGLReady.send(0);
-        return;
-    }
-
-    const vertices = [
-        -1, -1, -1, 1, 1, -1,
-        1, -1, -1, 1, 1, 1,
-    ];
-    const vertex_buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    let canvas = undefined;
+    let gl = undefined;
+    let program = undefined;
+    let fsh = undefined;
+    let vsh = undefined;
 
     const loadShader = (type, source) => {
         const shader = gl.createShader(type);
@@ -149,9 +133,28 @@ void main() {
         return shader;
     }
 
-    let program = undefined;
-    let fsh = undefined;
-    const vsh = loadShader(gl.VERTEX_SHADER, vertexShader);
+    const setupContext = () => {
+        canvas = document.querySelector("canvas");
+        canvas.setAttribute("height", window.innerHeight);
+        canvas.setAttribute("width", window.innerWidth);
+
+        gl = canvas.getContext("webgl");
+        if (! gl){
+            console.error("WebGL is not supported");
+            return;
+        }
+
+        const vertices = [
+            -1, -1, -1, 1, 1, -1,
+            1, -1, -1, 1, 1, 1,
+        ];
+        const vertex_buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        vsh = loadShader(gl.VERTEX_SHADER, vertexShader);
+
+        app.ports.onContextReady.send(null);
+    };
 
     const renderFrame = ({center, scale, color0, color1}) => {
         console.log(`Render frame ${JSON.stringify({center, scale, color0, color1})} !`);
@@ -216,7 +219,7 @@ void main() {
         app.ports.onShaderReady.send(null);
     }
 
+    app.ports.setupContext.subscribe(setupContext);
     app.ports.loadProgram.subscribe(loadProgram);
     app.ports.renderFrame.subscribe(renderFrame);
-    app.ports.onWebGLReady.send(null);
 })();
