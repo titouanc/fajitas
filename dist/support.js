@@ -196,8 +196,6 @@ void main() {
     });
 
     app.ports.renderFrame.subscribe(({center, scale, color0, color1}) => {
-        console.log(`Render frame ${JSON.stringify({center, scale, color0, color1})} !`);
-
         gl.uniform1f(
             gl.getUniformLocation(program, "scale"),
             scale

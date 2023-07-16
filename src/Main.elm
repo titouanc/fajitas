@@ -16,6 +16,7 @@ import Expression.Simplify exposing (simplify)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Html.Events.Extra.Mouse as Mouse
+import Html.Events.Extra.Wheel as Wheel
 import Ports
 import Url
 
@@ -30,9 +31,11 @@ type Msg
     | ChangeEquation String
     | ContextReady Ports.Size
     | ShaderReady ()
-    | MouseDown ( Float, Float )
-    | MouseMove ( Float, Float )
-    | MouseUp ( Float, Float )
+    | GrabStart ( Float, Float )
+    | GrabMove ( Float, Float )
+    | GrabEnd ( Float, Float )
+    | ZoomIn
+    | ZoomOut
 
 
 type alias Model =
@@ -103,6 +106,19 @@ translateCenter model ( fromX, fromY ) ( toX, toY ) =
     ( x, y )
 
 
+mouseMove : (Float, Float) -> Model -> Model
+mouseMove (toX, toY) model =
+    case (model.grab, model.size) of
+        (Just (fromX, fromY), Just {width, height}) ->
+            let
+                x = Tuple.first model.center - 2 * model.scale * (toX - fromX) / toFloat width
+                y = Tuple.second model.center - 2 * model.scale * (toY - fromY) / toFloat height
+            in
+            { model | center = (x, y) }
+
+        _ -> model
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -122,28 +138,23 @@ update msg model =
             in
             ( newModel, updateShader newModel )
 
-        MouseDown pos ->
+        GrabStart pos ->
             ( { model | grab = Just pos }, Cmd.none )
 
-        MouseMove to ->
-            case model.grab of
-                Nothing ->
-                    ( model, Cmd.none )
+        GrabMove to ->
+            (model, mouseMove to model |> render)
 
-                Just from ->
-                    ( model, render { model | center = translateCenter model from to } )
+        GrabEnd to ->
+            let newModel = mouseMove to model
+            in ({newModel | grab = Nothing}, render newModel)
 
-        MouseUp to ->
-            case model.grab of
-                Nothing ->
-                    ( model, Cmd.none )
+        ZoomIn ->
+            let newModel = {model | scale = model.scale * 0.925}
+            in (newModel, render newModel)
 
-                Just from ->
-                    let
-                        newModel =
-                            { model | center = translateCenter model from to, grab = Nothing }
-                    in
-                    ( newModel, render newModel )
+        ZoomOut ->
+            let newModel = {model | scale = model.scale * 1.08}
+            in (newModel, render newModel)
 
         NoMsg ->
             ( model, Cmd.none )
@@ -201,9 +212,10 @@ view model =
     , body =
         [ navBar model
         , Html.canvas
-            [ Mouse.onDown (.offsetPos >> MouseDown)
-            , Mouse.onMove (.offsetPos >> MouseMove)
-            , Mouse.onUp (.offsetPos >> MouseUp)
+            [ Mouse.onDown (.offsetPos >> GrabStart)
+            , Mouse.onMove (.offsetPos >> GrabMove)
+            , Mouse.onUp (.offsetPos >> GrabEnd)
+            , Wheel.onWheel (\{deltaY} -> if deltaY > 0 then ZoomOut else ZoomIn)
             ]
             []
         ]
