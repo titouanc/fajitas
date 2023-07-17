@@ -86,8 +86,8 @@ render model =
     Ports.renderFrame
         { center = model.center
         , scale = model.scale
-        , color0 = ( 0.7, 0.0, 0.0 )
-        , color1 = ( 0.7, 0.8, 0.0 )
+        , color0 = ( 0.55, 0.06, 0.06 )
+        , color1 = ( 1.0, 0.75, 0.0 )
         }
 
 
@@ -106,17 +106,21 @@ translateCenter model ( fromX, fromY ) ( toX, toY ) =
     ( x, y )
 
 
-mouseMove : (Float, Float) -> Model -> Model
-mouseMove (toX, toY) model =
-    case (model.grab, model.size) of
-        (Just (fromX, fromY), Just {width, height}) ->
+mouseMove : ( Float, Float ) -> Model -> Model
+mouseMove ( toX, toY ) model =
+    case ( model.grab, model.size ) of
+        ( Just ( fromX, fromY ), Just { width, height } ) ->
             let
-                x = Tuple.first model.center - 2 * model.scale * (toX - fromX) / toFloat width
-                y = Tuple.second model.center - 2 * model.scale * (toY - fromY) / toFloat height
-            in
-            { model | center = (x, y) }
+                x =
+                    Tuple.first model.center - 2 * model.scale * (toX - fromX) / toFloat width
 
-        _ -> model
+                y =
+                    Tuple.second model.center - 2 * model.scale * (toY - fromY) / toFloat height
+            in
+            { model | center = ( x, y ) }
+
+        _ ->
+            model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -142,19 +146,28 @@ update msg model =
             ( { model | grab = Just pos }, Cmd.none )
 
         GrabMove to ->
-            (model, mouseMove to model |> render)
+            ( model, mouseMove to model |> render )
 
         GrabEnd to ->
-            let newModel = mouseMove to model
-            in ({newModel | grab = Nothing}, render newModel)
+            let
+                newModel =
+                    mouseMove to model
+            in
+            ( { newModel | grab = Nothing }, render newModel )
 
         ZoomIn ->
-            let newModel = {model | scale = model.scale * 0.925}
-            in (newModel, render newModel)
+            let
+                newModel =
+                    { model | scale = model.scale * 0.925 }
+            in
+            ( newModel, render newModel )
 
         ZoomOut ->
-            let newModel = {model | scale = model.scale * 1.08}
-            in (newModel, render newModel)
+            let
+                newModel =
+                    { model | scale = model.scale * 1.08 }
+            in
+            ( newModel, render newModel )
 
         NoMsg ->
             ( model, Cmd.none )
@@ -206,17 +219,44 @@ navBar model =
         |> Navbar.view model.nav
 
 
+filterButtonEvent : (( Float, Float ) -> Msg) -> Mouse.Event -> Msg
+filterButtonEvent msg event =
+    if event.button == Mouse.MainButton then
+        msg event.offsetPos
+
+    else
+        NoMsg
+
+
 view : Model -> Browser.Document Msg
 view model =
+    let
+        mouseEvents =
+            case model.grab of
+                Nothing ->
+                    [ Mouse.onDown <| filterButtonEvent GrabStart ]
+
+                Just _ ->
+                    [ Mouse.onMove <| filterButtonEvent GrabMove
+                    , Mouse.onUp <| filterButtonEvent GrabEnd
+                    ]
+
+        wheelEvents =
+            [ Wheel.onWheel
+                (\{ deltaY } ->
+                    if deltaY > 0 then
+                        ZoomOut
+
+                    else
+                        ZoomIn
+                )
+            ]
+    in
     { title = "Fajitas"
     , body =
         [ navBar model
         , Html.canvas
-            [ Mouse.onDown (.offsetPos >> GrabStart)
-            , Mouse.onMove (.offsetPos >> GrabMove)
-            , Mouse.onUp (.offsetPos >> GrabEnd)
-            , Wheel.onWheel (\{deltaY} -> if deltaY > 0 then ZoomOut else ZoomIn)
-            ]
+            (mouseEvents ++ wheelEvents)
             []
         ]
     }
