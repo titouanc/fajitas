@@ -121,8 +121,6 @@ void main() {
 
     const loadShader = (type, source) => {
         const shader = gl.createShader(type);
-        console.log("Load shader");
-        console.log(source);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
 

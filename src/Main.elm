@@ -5,8 +5,10 @@ import Bootstrap.Form.Input as Input
 import Bootstrap.Form.InputGroup as InputGroup
 import Bootstrap.Grid as Grid
 import Bootstrap.Navbar as Navbar
+import Bootstrap.Dropdown as Dropdown
 import Browser
 import Browser.Navigation as Nav
+import Browser.Events as BrowserEvents
 import Color exposing (Color)
 import Complex
 import Debug
@@ -21,6 +23,7 @@ import Html.Events.Extra.Mouse as Mouse
 import Html.Events.Extra.Wheel as Wheel
 import Ports
 import Url
+import UrlParams exposing (UrlParams)
 import Utils
 
 
@@ -36,6 +39,7 @@ type ColorRef
 type Msg
     = NoMsg
     | NavbarMsg Navbar.State
+    | DropdownMsg Dropdown.State
     | ChangeEquation String
     | ContextReady Ports.Size
     | ShaderReady ()
@@ -45,10 +49,13 @@ type Msg
     | ZoomIn ( Float, Float )
     | ZoomOut ( Float, Float )
     | SetColor ColorRef String
+    | SetIterations String
+    | LoadUrlFragment UrlParams
 
 
 type alias Model =
     { nav : Navbar.State
+    , dropdown : Dropdown.State
     , equation : String
     , center : ( Float, Float )
     , scale : Float
@@ -56,6 +63,20 @@ type alias Model =
     , size : Maybe Ports.Size
     , color0 : Color
     , color1 : Color
+    , key : Nav.Key
+    , urlFrag : String
+    , iterations : Int
+    }
+
+
+getUrlParams : Model -> UrlParams
+getUrlParams model =
+    { equation = Just model.equation
+    , center = Just model.center
+    , scale = Just model.scale
+    , color0 = Just model.color0
+    , color1 = Just model.color1
+    , iterations = Just model.iterations
     }
 
 
@@ -72,6 +93,7 @@ init flags url key =
 
         model =
             { nav = nav
+            , dropdown = Dropdown.initialState
             , equation = initialEquation
             , scale = 2
             , center = ( -0.5, 0 )
@@ -79,6 +101,9 @@ init flags url key =
             , size = Nothing
             , color0 = Color.rgb 0.55 0.06 0.06
             , color1 = Color.rgb 1.0 0.75 0.0
+            , key = key
+            , urlFrag = url.fragment |> Maybe.withDefault ""
+            , iterations = 100
             }
     in
     ( model, Cmd.batch [ Ports.setupContext (), cmd ] )
@@ -88,7 +113,7 @@ updateShader : Model -> Cmd Msg
 updateShader model =
     case parseExpression model.equation of
         Ok expr ->
-            Ports.loadProgram { zn_next = toShader expr, n_iterations = 100 }
+            Ports.loadProgram { zn_next = toShader expr, n_iterations = model.iterations }
 
         _ ->
             Cmd.none
@@ -159,11 +184,14 @@ mouseMove model ( toX, toY ) =
             model
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update_ : Msg -> Model -> ( Model, Cmd Msg )
+update_ msg model =
     case msg of
         NavbarMsg nav ->
             ( { model | nav = nav }, Cmd.none )
+
+        DropdownMsg dropdown ->
+            ( {model | dropdown = dropdown}, Cmd.none)
 
         ContextReady size ->
             ( { model | size = Just size }, updateShader model )
@@ -225,8 +253,39 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
+        LoadUrlFragment str ->
+            let
+                _ =
+                    Debug.log "LoadUrlFragment" str
+            in
+            ( model, Cmd.none )
+
+        SetIterations str ->
+            case String.toInt str of
+                Just it ->
+                    let newModel = {model | iterations = it}
+                    in (newModel, updateShader newModel)
+                _ -> (model, Cmd.none)
+
+
         NoMsg ->
             ( model, Cmd.none )
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    let
+        ( newModel, cmd ) =
+            update_ msg model
+
+        urlFrag =
+            getUrlParams newModel |> UrlParams.toString
+    in
+    if urlFrag == model.urlFrag then
+        ( newModel, cmd )
+
+    else
+        ( { newModel | urlFrag = urlFrag }, Cmd.batch [ cmd, Nav.replaceUrl model.key ("#" ++ urlFrag) ] )
 
 
 subscriptions : Model -> Sub Msg
@@ -239,12 +298,18 @@ subscriptions model =
 
 onUrlRequest : Browser.UrlRequest -> Msg
 onUrlRequest req =
+    let
+        _ =
+            Debug.log "onUrlRequest" req
+    in
     NoMsg
 
 
 onUrlChange : Url.Url -> Msg
-onUrlChange url =
-    NoMsg
+onUrlChange =
+    .fragment
+        >> Maybe.map (UrlParams.fromString >> LoadUrlFragment)
+        >> Maybe.withDefault NoMsg
 
 
 equationInput : Model -> Html Msg
@@ -258,25 +323,67 @@ equationInput model =
         )
         |> InputGroup.large
         |> InputGroup.predecessors
-            [ InputGroup.span [] [ Html.text "Z", Html.sub [] [ Html.text "n+1" ], Html.text " = " ] ]
+            [ InputGroup.span
+                []
+                [ Dropdown.dropdown
+                    model.dropdown
+                    { options = []
+                    , toggleMsg = DropdownMsg
+                    , toggleButton = Dropdown.toggle
+                        []
+                        [ Html.text "Z", Html.sub [] [ Html.text "n+1" ]
+                        , Html.text " = "
+                        ]
+                    , items =
+                        [ Dropdown.buttonItem
+                            []
+                            [ Html.input
+                                [ Attr.type_ "color"
+                                , Attr.value (Utils.toCssHex model.color0)
+                                , Events.onInput <| SetColor Color0
+                                ]
+                                []
+                            , Html.text " Background"
+                            ]
+                        , Dropdown.buttonItem
+                            []
+                            [ Html.input
+                                [ Attr.type_ "color"
+                                , Attr.value (Utils.toCssHex model.color1)
+                                , Events.onInput <| SetColor Color1
+                                ]
+                                []
+                            , Html.text " Foreground"
+                            ]
+                        , Dropdown.buttonItem
+                            []
+                            [ Html.input
+                                [ Attr.type_ "range"
+                                , Attr.min "1"
+                                , Attr.max "1000"
+                                , Attr.value (String.fromInt model.iterations)
+                                , Events.onInput SetIterations
+                                ]
+                                []
+                            , Html.text <| " Iterations: " ++ String.fromInt model.iterations
+                            ]
+                        ]
+                    }
+                ]
+            ]
         |> InputGroup.view
 
 
 navBar : Model -> Html Msg
 navBar model =
     Navbar.config NavbarMsg
+        |> Navbar.dark
         |> Navbar.withAnimation
-        |> Navbar.brand [ Attr.href "#" ] [ Html.text "Fajitas 🌶️" ]
+        |> Navbar.brand [ Attr.href "#" ] [ Html.text "🌶️ Fajitas" ]
         |> Navbar.items
             []
         |> Navbar.customItems
-            [ Navbar.formItem
-                []
-                [ equationInput model
-                , Html.input [ Attr.type_ "color", Attr.value (Utils.toCssHex model.color0), Events.onInput <| SetColor Color0 ] []
-                , Html.input [ Attr.type_ "color", Attr.value (Utils.toCssHex model.color1), Events.onInput <| SetColor Color1 ] []
-                ]
-            ]
+            [ Navbar.formItem [] [ equationInput model ] ]
         |> Navbar.view model.nav
 
 
