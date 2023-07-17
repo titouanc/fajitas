@@ -5,7 +5,7 @@ import Expression
         ( BinaryExpression
         , BinaryOp(..)
         , Expression(..)
-        , Keyword
+        , Keyword(..)
         , UnaryExpression
         , UnaryOp(..)
         )
@@ -15,8 +15,11 @@ import Expression.Simplify exposing (simplify)
 toShader : Expression -> String
 toShader expression =
     case simplify expression of
-        Keyword k ->
-            Debug.toString k
+        Keyword Zn ->
+            "Zn"
+
+        Keyword C ->
+            "C"
 
         Number { real, imag } ->
             "vec2(" ++ String.fromFloat real ++ "," ++ String.fromFloat imag ++ ")"
