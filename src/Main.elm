@@ -91,26 +91,6 @@ render model =
         }
 
 
-
-{- let zoomWithFixedPoint = (state, zlvl, px, py) => {
-       let z1 = state.zoom
-       let z2 = z1 / zlvl
-
-       /* Center and scale */
-       let [cx, cy] = state.center
-       let [sx, sy] = this.getScale()
-       let [W, H] = [this.gl.canvas.width, this.gl.canvas.height]
-
-       /* New center pos */
-       let center = [
-           cx + 2 * (px/W - 0.5) * (z1-z2) * sx,
-           cy + 2 * (0.5 - py/H) * (z1-z2) * sy,
-       ]
-       repo.setState({center: center, zoom: z2})
-   }
--}
-
-
 zoomWithFixedPoint : Model -> Float -> ( Float, Float ) -> Model
 zoomWithFixedPoint model zoomFactor ( pX, pY ) =
     case ( model.center, model.size ) of
