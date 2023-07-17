@@ -34,8 +34,8 @@ type Msg
     | GrabStart ( Float, Float )
     | GrabMove ( Float, Float )
     | GrabEnd ( Float, Float )
-    | ZoomIn
-    | ZoomOut
+    | ZoomIn ( Float, Float )
+    | ZoomOut ( Float, Float )
 
 
 type alias Model =
@@ -91,31 +91,65 @@ render model =
         }
 
 
-translateCenter : Model -> ( Float, Float ) -> ( Float, Float ) -> ( Float, Float )
-translateCenter model ( fromX, fromY ) ( toX, toY ) =
-    let
-        s =
-            Maybe.withDefault { width = 1, height = 1 } model.size
 
-        x =
-            Tuple.first model.center - 2 * model.scale * (toX - fromX) / toFloat s.width
+{- let zoomWithFixedPoint = (state, zlvl, px, py) => {
+       let z1 = state.zoom
+       let z2 = z1 / zlvl
 
-        y =
-            Tuple.second model.center - 2 * model.scale * (toY - fromY) / toFloat s.height
-    in
-    ( x, y )
+       /* Center and scale */
+       let [cx, cy] = state.center
+       let [sx, sy] = this.getScale()
+       let [W, H] = [this.gl.canvas.width, this.gl.canvas.height]
+
+       /* New center pos */
+       let center = [
+           cx + 2 * (px/W - 0.5) * (z1-z2) * sx,
+           cy + 2 * (0.5 - py/H) * (z1-z2) * sy,
+       ]
+       repo.setState({center: center, zoom: z2})
+   }
+-}
 
 
-mouseMove : ( Float, Float ) -> Model -> Model
-mouseMove ( toX, toY ) model =
-    case ( model.grab, model.size ) of
-        ( Just ( fromX, fromY ), Just { width, height } ) ->
+zoomWithFixedPoint : Model -> Float -> ( Float, Float ) -> Model
+zoomWithFixedPoint model zoomFactor ( pX, pY ) =
+    case ( model.center, model.size ) of
+        ( ( cX, cY ), Just { width, height } ) ->
             let
+                aspectRatio =
+                    toFloat width / toFloat height
+
+                z1 =
+                    model.scale
+
+                z2 =
+                    model.scale * zoomFactor
+
                 x =
-                    Tuple.first model.center - 2 * model.scale * (toX - fromX) / toFloat width
+                    cX + 2 * aspectRatio * (0.5 - pX / toFloat width) * (z2 - z1)
 
                 y =
-                    Tuple.second model.center - 2 * model.scale * (toY - fromY) / toFloat height
+                    cY + 2 * (0.5 - pY / toFloat height) * (z2 - z1)
+            in
+            { model | center = ( x, y ), scale = z2 }
+
+        _ ->
+            model
+
+
+mouseMove : Model -> ( Float, Float ) -> Model
+mouseMove model ( toX, toY ) =
+    case ( model.center, model.grab, model.size ) of
+        ( ( cX, cY ), Just ( fromX, fromY ), Just { width, height } ) ->
+            let
+                aspectRatio =
+                    toFloat width / toFloat height
+
+                x =
+                    cX - 2 * model.scale * aspectRatio * (toX - fromX) / toFloat width
+
+                y =
+                    cY - 2 * model.scale * (toY - fromY) / toFloat height
             in
             { model | center = ( x, y ) }
 
@@ -146,26 +180,26 @@ update msg model =
             ( { model | grab = Just pos }, Cmd.none )
 
         GrabMove to ->
-            ( model, mouseMove to model |> render )
+            ( model, mouseMove model to |> render )
 
         GrabEnd to ->
             let
                 newModel =
-                    mouseMove to model
+                    mouseMove model to
             in
             ( { newModel | grab = Nothing }, render newModel )
 
-        ZoomIn ->
+        ZoomIn point ->
             let
                 newModel =
-                    { model | scale = model.scale * 0.925 }
+                    zoomWithFixedPoint model 0.925 point
             in
             ( newModel, render newModel )
 
-        ZoomOut ->
+        ZoomOut point ->
             let
                 newModel =
-                    { model | scale = model.scale * 1.08 }
+                    zoomWithFixedPoint model 1.08 point
             in
             ( newModel, render newModel )
 
@@ -243,12 +277,12 @@ view model =
 
         wheelEvents =
             [ Wheel.onWheel
-                (\{ deltaY } ->
+                (\{ deltaY, mouseEvent } ->
                     if deltaY > 0 then
-                        ZoomOut
+                        ZoomOut mouseEvent.offsetPos
 
                     else
-                        ZoomIn
+                        ZoomIn mouseEvent.offsetPos
                 )
             ]
     in
