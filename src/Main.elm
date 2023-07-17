@@ -7,6 +7,7 @@ import Bootstrap.Grid as Grid
 import Bootstrap.Navbar as Navbar
 import Browser
 import Browser.Navigation as Nav
+import Color exposing (Color)
 import Complex
 import Debug
 import Expression exposing (BinaryOp(..), Expression(..), Keyword(..), UnaryOp(..))
@@ -15,14 +16,21 @@ import Expression.Shader exposing (toShader)
 import Expression.Simplify exposing (simplify)
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Html.Events as Events
 import Html.Events.Extra.Mouse as Mouse
 import Html.Events.Extra.Wheel as Wheel
 import Ports
 import Url
+import Utils
 
 
 type alias Flags =
     {}
+
+
+type ColorRef
+    = Color0
+    | Color1
 
 
 type Msg
@@ -36,6 +44,7 @@ type Msg
     | GrabEnd ( Float, Float )
     | ZoomIn ( Float, Float )
     | ZoomOut ( Float, Float )
+    | SetColor ColorRef String
 
 
 type alias Model =
@@ -45,6 +54,8 @@ type alias Model =
     , scale : Float
     , grab : Maybe ( Float, Float )
     , size : Maybe Ports.Size
+    , color0 : Color
+    , color1 : Color
     }
 
 
@@ -66,6 +77,8 @@ init flags url key =
             , center = ( -0.5, 0 )
             , grab = Nothing
             , size = Nothing
+            , color0 = Color.rgb 0.55 0.06 0.06
+            , color1 = Color.rgb 1.0 0.75 0.0
             }
     in
     ( model, Cmd.batch [ Ports.setupContext (), cmd ] )
@@ -81,13 +94,22 @@ updateShader model =
             Cmd.none
 
 
+tupleRGBf : Color -> ( Float, Float, Float )
+tupleRGBf color =
+    let
+        c =
+            Color.toRgba color
+    in
+    ( c.red, c.green, c.blue )
+
+
 render : Model -> Cmd Msg
 render model =
     Ports.renderFrame
         { center = model.center
         , scale = model.scale
-        , color0 = ( 0.55, 0.06, 0.06 )
-        , color1 = ( 1.0, 0.75, 0.0 )
+        , color0 = tupleRGBf model.color0
+        , color1 = tupleRGBf model.color1
         }
 
 
@@ -183,6 +205,26 @@ update msg model =
             in
             ( newModel, render newModel )
 
+        SetColor ref repr ->
+            case Utils.fromCssHex (Debug.log "Repr" repr) of
+                Just color ->
+                    let
+                        _ =
+                            Debug.log "Parsed" color
+
+                        newModel =
+                            case ref of
+                                Color0 ->
+                                    { model | color0 = color }
+
+                                Color1 ->
+                                    { model | color1 = color }
+                    in
+                    ( newModel, render newModel )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
         NoMsg ->
             ( model, Cmd.none )
 
@@ -228,7 +270,12 @@ navBar model =
         |> Navbar.items
             []
         |> Navbar.customItems
-            [ Navbar.formItem [] [ equationInput model ]
+            [ Navbar.formItem
+                []
+                [ equationInput model
+                , Html.input [ Attr.type_ "color", Attr.value (Utils.toCssHex model.color0), Events.onInput <| SetColor Color0 ] []
+                , Html.input [ Attr.type_ "color", Attr.value (Utils.toCssHex model.color1), Events.onInput <| SetColor Color1 ] []
+                ]
             ]
         |> Navbar.view model.nav
 
