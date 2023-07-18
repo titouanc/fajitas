@@ -1,14 +1,14 @@
 module Main exposing (..)
 
 import Bootstrap.CDN as CDN
+import Bootstrap.Dropdown as Dropdown
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.InputGroup as InputGroup
 import Bootstrap.Grid as Grid
 import Bootstrap.Navbar as Navbar
-import Bootstrap.Dropdown as Dropdown
 import Browser
-import Browser.Navigation as Nav
 import Browser.Events as BrowserEvents
+import Browser.Navigation as Nav
 import Color exposing (Color)
 import Complex
 import Debug
@@ -41,7 +41,7 @@ type Msg
     | NavbarMsg Navbar.State
     | DropdownMsg Dropdown.State
     | ChangeEquation String
-    | ContextReady Ports.Size
+    | ContextReady Ports.ReadyContext
     | ShaderReady ()
     | GrabStart ( Float, Float )
     | GrabMove ( Float, Float )
@@ -60,7 +60,7 @@ type alias Model =
     , center : ( Float, Float )
     , scale : Float
     , grab : Maybe ( Float, Float )
-    , size : Maybe Ports.Size
+    , renderContext : Maybe Ports.ReadyContext
     , color0 : Color
     , color1 : Color
     , key : Nav.Key
@@ -98,7 +98,7 @@ init flags url key =
             , scale = 2
             , center = ( -0.5, 0 )
             , grab = Nothing
-            , size = Nothing
+            , renderContext = Nothing
             , color0 = Color.rgb 0.55 0.06 0.06
             , color1 = Color.rgb 1.0 0.75 0.0
             , key = key
@@ -140,43 +140,37 @@ render model =
 
 zoomWithFixedPoint : Model -> Float -> ( Float, Float ) -> Model
 zoomWithFixedPoint model zoomFactor ( pX, pY ) =
-    case ( model.center, model.size ) of
-        ( ( cX, cY ), Just { width, height } ) ->
+    case ( model.center, model.renderContext ) of
+        ( ( cX, cY ), Just { size, aspect_ratio } ) ->
             let
-                aspectRatio =
-                    toFloat width / toFloat height
+                z =
+                    model.scale * (1 - zoomFactor)
 
-                z1 =
-                    model.scale
+                dX =
+                    2 * (pX / toFloat size.width - 0.5) * aspect_ratio.width
 
-                z2 =
-                    model.scale * zoomFactor
-
-                x =
-                    cX + 2 * aspectRatio * (0.5 - pX / toFloat width) * (z2 - z1)
-
-                y =
-                    cY + 2 * (0.5 - pY / toFloat height) * (z2 - z1)
+                dY =
+                    2 * (0.5 - pY / toFloat size.height) * aspect_ratio.height
             in
-            { model | center = ( x, y ), scale = z2 }
+            { model
+                | center = ( cX + dX * z, cY + dY * z )
+                , scale = model.scale * zoomFactor
+            }
 
         _ ->
             model
 
 
-mouseMove : Model -> ( Float, Float ) -> Model
-mouseMove model ( toX, toY ) =
-    case ( model.center, model.grab, model.size ) of
-        ( ( cX, cY ), Just ( fromX, fromY ), Just { width, height } ) ->
+grabMove : Model -> ( Float, Float ) -> Model
+grabMove model ( toX, toY ) =
+    case ( model.center, model.grab, model.renderContext ) of
+        ( ( cX, cY ), Just ( fromX, fromY ), Just { size, aspect_ratio } ) ->
             let
-                aspectRatio =
-                    toFloat width / toFloat height
-
                 x =
-                    cX - 2 * model.scale * aspectRatio * (toX - fromX) / toFloat width
+                    cX - 2 * model.scale * aspect_ratio.width * (toX - fromX) / toFloat size.width
 
                 y =
-                    cY - 2 * model.scale * (toY - fromY) / toFloat height
+                    cY - 2 * model.scale * aspect_ratio.height * (fromY - toY) / toFloat size.height
             in
             { model | center = ( x, y ) }
 
@@ -191,10 +185,10 @@ update_ msg model =
             ( { model | nav = nav }, Cmd.none )
 
         DropdownMsg dropdown ->
-            ( {model | dropdown = dropdown}, Cmd.none)
+            ( { model | dropdown = dropdown }, Cmd.none )
 
-        ContextReady size ->
-            ( { model | size = Just size }, updateShader model )
+        ContextReady ctx ->
+            ( { model | renderContext = Just ctx }, updateShader model )
 
         ShaderReady _ ->
             ( model, render model )
@@ -210,36 +204,33 @@ update_ msg model =
             ( { model | grab = Just pos }, Cmd.none )
 
         GrabMove to ->
-            ( model, mouseMove model to |> render )
+            ( model, grabMove model to |> render )
 
         GrabEnd to ->
             let
                 newModel =
-                    mouseMove model to
+                    grabMove model to
             in
             ( { newModel | grab = Nothing }, render newModel )
 
         ZoomIn point ->
             let
                 newModel =
-                    zoomWithFixedPoint model 0.925 point
+                    zoomWithFixedPoint model 0.8 point
             in
             ( newModel, render newModel )
 
         ZoomOut point ->
             let
                 newModel =
-                    zoomWithFixedPoint model 1.08 point
+                    zoomWithFixedPoint model 1.25 point
             in
             ( newModel, render newModel )
 
         SetColor ref repr ->
-            case Utils.fromCssHex (Debug.log "Repr" repr) of
+            case Utils.fromCssHex repr of
                 Just color ->
                     let
-                        _ =
-                            Debug.log "Parsed" color
-
                         newModel =
                             case ref of
                                 Color0 ->
@@ -253,20 +244,24 @@ update_ msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        LoadUrlFragment str ->
+        LoadUrlFragment urlparams ->
             let
                 _ =
-                    Debug.log "LoadUrlFragment" str
+                    Debug.log "LoadUrlFragment" urlparams
             in
             ( model, Cmd.none )
 
         SetIterations str ->
             case String.toInt str of
                 Just it ->
-                    let newModel = {model | iterations = it}
-                    in (newModel, updateShader newModel)
-                _ -> (model, Cmd.none)
+                    let
+                        newModel =
+                            { model | iterations = it }
+                    in
+                    ( newModel, updateShader newModel )
 
+                _ ->
+                    ( model, Cmd.none )
 
         NoMsg ->
             ( model, Cmd.none )
@@ -329,11 +324,13 @@ equationInput model =
                     model.dropdown
                     { options = []
                     , toggleMsg = DropdownMsg
-                    , toggleButton = Dropdown.toggle
-                        []
-                        [ Html.text "Z", Html.sub [] [ Html.text "n+1" ]
-                        , Html.text " = "
-                        ]
+                    , toggleButton =
+                        Dropdown.toggle
+                            []
+                            [ Html.text "Z"
+                            , Html.sub [] [ Html.text "n+1" ]
+                            , Html.text " = "
+                            ]
                     , items =
                         [ Dropdown.buttonItem
                             []

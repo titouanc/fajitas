@@ -118,6 +118,7 @@ void main() {
     let program = undefined;
     let fsh = undefined;
     let vsh = undefined;
+    let aspect_ratio = [1, 1];
 
     const loadShader = (type, source) => {
         const shader = gl.createShader(type);
@@ -153,7 +154,20 @@ void main() {
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         vsh = loadShader(gl.VERTEX_SHADER, vertexShader);
 
-        app.ports.onContextReady.send({width: canvas.width, height: canvas.height});
+        const W = canvas.width
+        const H = canvas.height
+        aspect_ratio = (W > H) ? [1, -H/W] : [W/H, -1];
+
+        app.ports.onContextReady.send({
+            size: {
+                width: canvas.width,
+                height: canvas.height,
+            },
+            aspect_ratio: {
+                width: aspect_ratio[0],
+                height: aspect_ratio[1],
+            },
+        });
     });
 
     app.ports.loadProgram.subscribe((loadProgramCommand) => {
@@ -184,11 +198,10 @@ void main() {
         gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(coord);
 
-        const W = canvas.width
-        const H = canvas.height
-        const aspect_ratio_value = (W > H) ? [1, -H/W] : [W/H, -1];
-        const aspect_ratio = gl.getUniformLocation(program, "aspect_ratio");
-        gl.uniform2fv(aspect_ratio, aspect_ratio_value);
+        gl.uniform2fv(
+            gl.getUniformLocation(program, "aspect_ratio"),
+            aspect_ratio
+        );
 
         app.ports.onShaderReady.send(null);
     });

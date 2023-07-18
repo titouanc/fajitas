@@ -1,4 +1,4 @@
-port module Ports exposing (Size, loadProgram, onContextReady, onShaderReady, renderFrame, setupContext, unpackInts)
+port module Ports exposing (..)
 
 
 base : Int
@@ -6,20 +6,17 @@ base =
     65536
 
 
-type alias Size =
-    { width : Int, height : Int }
+type alias Size t =
+    { width : t, height : t }
 
 
-unpackInts : Int -> Maybe Size
-unpackInts x =
-    if x == 0 then
-        Nothing
-
-    else
-        Just { width = x // base, height = x |> modBy base }
+type alias ReadyContext =
+    { size : Size Int -- The size of the rendering context, in pixels
+    , aspect_ratio : Size Float -- The aspect ratio used by the renderer
+    }
 
 
-port onContextReady : (Size -> msg) -> Sub msg
+port onContextReady : (ReadyContext -> msg) -> Sub msg
 
 
 port onShaderReady : (() -> msg) -> Sub msg
